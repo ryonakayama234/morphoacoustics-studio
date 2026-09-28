@@ -7,7 +7,11 @@ import requestSchema from '../../vendor/performance-contract/v0/performance-requ
 import resultSchema from '../../vendor/performance-contract/v0/performance-result.schema.json';
 import { semanticRequestIssues } from './semanticValidation';
 
-const ajv = new Ajv2020({ allErrors: true, strict: true });
+// Keep Ajv strictness enabled, except strictRequired. The upstream schema uses
+// `required` inside anyOf branches while defining those properties on the parent
+// object, which is valid JSON Schema but intentionally triggers Ajv's optional
+// strictRequired diagnostic.
+const ajv = new Ajv2020({ allErrors: true, strict: true, strictRequired: false });
 for (const schema of [commonSchema, characterSchema, scriptSchema, directionSchema, requestSchema, resultSchema]) {
   ajv.addSchema(schema);
 }
