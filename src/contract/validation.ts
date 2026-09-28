@@ -16,12 +16,15 @@ for (const schema of [commonSchema, characterSchema, scriptSchema, directionSche
   ajv.addSchema(schema);
 }
 
-const requestValidator = ajv.getSchema(requestSchema.$id);
-const resultValidator = ajv.getSchema(resultSchema.$id);
+const maybeRequestValidator = ajv.getSchema(requestSchema.$id);
+const maybeResultValidator = ajv.getSchema(resultSchema.$id);
 
-if (!requestValidator || !resultValidator) {
+if (!maybeRequestValidator || !maybeResultValidator) {
   throw new Error('Performance Contract v0 schemas failed to register.');
 }
+
+const requestValidator = maybeRequestValidator;
+const resultValidator = maybeResultValidator;
 
 export type ValidationResult =
   | { ok: true; issues: [] }
