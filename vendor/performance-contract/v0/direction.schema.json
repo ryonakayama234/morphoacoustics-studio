@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://morphoacoustics.local/contracts/performance/v0/direction.schema.json",
+  "title": "Direction v0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "direction_id", "revision"],
+  "properties": {
+    "schema_version": {"const": "performance-contract/v0"},
+    "direction_id": {"type": "string", "minLength": 1},
+    "revision": {"type": "integer", "minimum": 1},
+    "note": {"type": "string"},
+    "controls": {"$ref": "common.schema.json#/$defs/directionControls"},
+    "segment_overrides": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["segment_id"],
+        "properties": {
+          "segment_id": {"type": "string", "minLength": 1},
+          "note": {"type": "string"},
+          "controls": {"$ref": "common.schema.json#/$defs/directionControls"}
+        },
+        "anyOf": [{"required": ["note"]}, {"required": ["controls"]}]
+      }
+    }
+  }
+}

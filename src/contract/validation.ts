@@ -1,0 +1,44 @@
+import Ajv2020, { type ErrorObject } from 'ajv/dist/2020';
+import commonSchema from '../../vendor/performance-contract/v0/common.schema.json';
+import characterSchema from '../../vendor/performance-contract/v0/character.schema.json';
+import scriptSchema from '../../vendor/performance-contract/v0/script.schema.json';
+import directionSchema from '../../vendor/performance-contract/v0/direction.schema.json';
+import requestSchema from '../../vendor/performance-contract/v0/performance-request.schema.json';
+import resultSchema from '../../vendor/performance-contract/v0/performance-result.schema.json';
+import { semanticRequestIssues } from './semanticValidation';
+
+const ajv = new Ajv2020({ allErrors: true, strict: true });
+for (const schema of [commonSchema, characterSchema, scriptSchema, directionSchema, requestSchema, resultSchema]) {
+  ajv.addSchema(schema);
+}
+
+const requestValidator = ajv.getSchema(requestSchema.$id);
+const resultValidator = ajv.getSchema(resultSchema.$id);
+
+if (!requestValidator || !resultValidator) {
+  throw new Error('Performance Contract v0 schemas failed to register.');
+}
+
+export type ValidationResult =
+  | { ok: true; issues: [] }
+  | { ok: false; issues: string[] };
+
+function formatAjvErrors(errors: ErrorObject[] | null | undefined): string[] {
+  return (errors ?? []).map((error) => `${error.instancePath || '/'} ${error.message ?? 'is invalid'}`);
+}
+
+export function validatePerformanceRequest(input: unknown): ValidationResult {
+  if (!requestValidator(input)) {
+    return { ok: false, issues: formatAjvErrors(requestValidator.errors) };
+  }
+  const semanticIssues = semanticRequestIssues(input);
+  return semanticIssues.length === 0
+    ? { ok: true, issues: [] }
+    : { ok: false, issues: semanticIssues };
+}
+
+export function validatePerformanceResult(input: unknown): ValidationResult {
+  return resultValidator(input)
+    ? { ok: true, issues: [] }
+    : { ok: false, issues: formatAjvErrors(resultValidator.errors) };
+}

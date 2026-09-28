@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://morphoacoustics.local/contracts/performance/v0/performance-request.schema.json",
+  "title": "PerformanceRequest v0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "request_id", "character", "script", "direction", "seed"],
+  "properties": {
+    "schema_version": {"const": "performance-contract/v0"},
+    "request_id": {"type": "string", "minLength": 1},
+    "character": {"$ref": "character.schema.json"},
+    "script": {"$ref": "script.schema.json"},
+    "direction": {"$ref": "direction.schema.json"},
+    "seed": {"type": "integer", "minimum": 0},
+    "requested_capabilities": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"enum": ["audio", "timeline", "diagnostics", "gesture_trace", "physical_trace"]}
+    }
+  }
+}
