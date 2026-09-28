@@ -15,7 +15,9 @@
     "requested_capabilities": {
       "type": "array",
       "uniqueItems": true,
-      "items": {"enum": ["audio", "timeline", "diagnostics", "gesture_trace", "physical_trace"]}
+      "items": {
+        "enum": ["audio", "timeline", "diagnostics", "gesture_trace", "physical_trace"]
+      }
     }
   }
 }

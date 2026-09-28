@@ -10,7 +10,9 @@
     "direction_id": {"type": "string", "minLength": 1},
     "revision": {"type": "integer", "minimum": 1},
     "note": {"type": "string"},
-    "controls": {"$ref": "common.schema.json#/$defs/directionControls"},
+    "controls": {
+      "$ref": "common.schema.json#/$defs/directionControls"
+    },
     "segment_overrides": {
       "type": "array",
       "items": {
@@ -20,9 +22,14 @@
         "properties": {
           "segment_id": {"type": "string", "minLength": 1},
           "note": {"type": "string"},
-          "controls": {"$ref": "common.schema.json#/$defs/directionControls"}
+          "controls": {
+            "$ref": "common.schema.json#/$defs/directionControls"
+          }
         },
-        "anyOf": [{"required": ["note"]}, {"required": ["controls"]}]
+        "anyOf": [
+          {"required": ["note"]},
+          {"required": ["controls"]}
+        ]
       }
     }
   }

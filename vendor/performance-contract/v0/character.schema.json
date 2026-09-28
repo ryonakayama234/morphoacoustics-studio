@@ -11,6 +11,8 @@
     "revision": {"type": "integer", "minimum": 1},
     "name": {"type": "string", "minLength": 1},
     "description": {"type": "string"},
-    "default_controls": {"$ref": "common.schema.json#/$defs/directionControls"}
+    "default_controls": {
+      "$ref": "common.schema.json#/$defs/directionControls"
+    }
   }
 }

@@ -8,8 +8,18 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "energy": {"type": "number", "minimum": 0.0, "maximum": 1.0, "description": "Creator-facing performance energy, not a physical parameter."},
-        "pace": {"type": "number", "exclusiveMinimum": 0.0, "maximum": 4.0, "description": "Relative creator-facing pace; 1.0 is neutral."},
+        "energy": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Creator-facing performance energy, not a physical parameter."
+        },
+        "pace": {
+          "type": "number",
+          "exclusiveMinimum": 0.0,
+          "maximum": 4.0,
+          "description": "Relative creator-facing pace; 1.0 is neutral."
+        },
         "emotion": {
           "type": "object",
           "additionalProperties": false,

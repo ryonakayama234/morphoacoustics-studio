@@ -10,9 +10,16 @@
     "performance_id": {"type": "string", "minLength": 1},
     "request_id": {"type": "string", "minLength": 1},
     "take_id": {"type": "string", "minLength": 1},
-    "job_status": {"enum": ["QUEUED", "RUNNING", "SUCCEEDED", "FAILED", "CANCELLED"]},
-    "realization_outcome": {"enum": ["FEASIBLE", "INFEASIBLE", "UNSUPPORTED", "INVALID"]},
-    "artifacts": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/artifact"}},
+    "job_status": {
+      "enum": ["QUEUED", "RUNNING", "SUCCEEDED", "FAILED", "CANCELLED"]
+    },
+    "realization_outcome": {
+      "enum": ["FEASIBLE", "INFEASIBLE", "UNSUPPORTED", "INVALID"]
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {"$ref": "common.schema.json#/$defs/artifact"}
+    },
     "timeline": {
       "type": "array",
       "items": {
@@ -26,7 +33,10 @@
         }
       }
     },
-    "diagnostics": {"type": "array", "items": {"$ref": "common.schema.json#/$defs/diagnostic"}},
+    "diagnostics": {
+      "type": "array",
+      "items": {"$ref": "common.schema.json#/$defs/diagnostic"}
+    },
     "provenance": {
       "type": "object",
       "additionalProperties": false,
@@ -43,7 +53,10 @@
   },
   "allOf": [
     {
-      "if": {"properties": {"job_status": {"const": "SUCCEEDED"}}, "required": ["job_status"]},
+      "if": {
+        "properties": {"job_status": {"const": "SUCCEEDED"}},
+        "required": ["job_status"]
+      },
       "then": {"required": ["realization_outcome"]}
     }
   ]
