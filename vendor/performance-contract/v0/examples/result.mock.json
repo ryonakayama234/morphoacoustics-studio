@@ -1,0 +1,42 @@
+{
+  "schema_version": "performance-contract/v0",
+  "performance_id": "performance_0142",
+  "request_id": "request_mio_0001",
+  "take_id": "take_003",
+  "job_status": "SUCCEEDED",
+  "realization_outcome": "FEASIBLE",
+  "artifacts": [
+    {
+      "kind": "audio",
+      "ref": "artifact://mock/audio/performance_0142.wav",
+      "media_type": "audio/wav"
+    }
+  ],
+  "timeline": [
+    {
+      "segment_id": "s1",
+      "start_seconds": 0.0,
+      "end_seconds": 0.72
+    },
+    {
+      "segment_id": "s2",
+      "start_seconds": 0.82,
+      "end_seconds": 2.31
+    }
+  ],
+  "diagnostics": [
+    {
+      "code": "MOCK_BACKEND",
+      "severity": "info",
+      "message": "This result was produced by the deterministic mock backend."
+    }
+  ],
+  "provenance": {
+    "backend": "mock-v0",
+    "backend_version": "0.1.0",
+    "contract_version": "performance-contract/v0",
+    "seed": 42,
+    "input_digest": "sha256:example-only",
+    "input_digest_algorithm": "sha256-over-deterministic-json"
+  }
+}

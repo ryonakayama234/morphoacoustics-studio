@@ -1,0 +1,54 @@
+{
+  "schema_version": "performance-contract/v0",
+  "request_id": "request_mio_0001",
+  "character": {
+    "schema_version": "performance-contract/v0",
+    "character_id": "char_mio",
+    "revision": 3,
+    "name": "ミオ",
+    "description": "好奇心が強い。普段は静かだが、興奮すると早口になる。",
+    "default_controls": {
+      "energy": 0.35,
+      "pace": 0.9
+    }
+  },
+  "script": {
+    "schema_version": "performance-contract/v0",
+    "script_id": "script_001",
+    "revision": 1,
+    "segments": [
+      {
+        "segment_id": "s1",
+        "speaker_character_id": "char_mio",
+        "text": "おはよう。"
+      },
+      {
+        "segment_id": "s2",
+        "speaker_character_id": "char_mio",
+        "text": "今日も眠いね。"
+      }
+    ]
+  },
+  "direction": {
+    "schema_version": "performance-contract/v0",
+    "direction_id": "direction_001",
+    "revision": 1,
+    "note": "眠そう。でも相手を見つけて少し嬉しくなる。",
+    "controls": {
+      "energy": 0.25,
+      "pace": 0.82,
+      "emotion": {
+        "label": "sleepy-happy",
+        "intensity": 0.45
+      }
+    },
+    "segment_overrides": [
+      {
+        "segment_id": "s2",
+        "note": "語尾で少し笑う。"
+      }
+    ]
+  },
+  "seed": 42,
+  "requested_capabilities": ["audio", "timeline", "diagnostics"]
+}

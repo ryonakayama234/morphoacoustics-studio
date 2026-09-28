@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://morphoacoustics.local/contracts/performance/v0/common.schema.json",
+  "title": "Performance Contract v0 Common Types",
+  "type": "object",
+  "$defs": {
+    "directionControls": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "energy": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "description": "Creator-facing performance energy, not a physical parameter."
+        },
+        "pace": {
+          "type": "number",
+          "exclusiveMinimum": 0.0,
+          "maximum": 4.0,
+          "description": "Relative creator-facing pace; 1.0 is neutral."
+        },
+        "emotion": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["label", "intensity"],
+          "properties": {
+            "label": {"type": "string", "minLength": 1},
+            "intensity": {"type": "number", "minimum": 0.0, "maximum": 1.0}
+          }
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "ref"],
+      "properties": {
+        "kind": {"type": "string", "minLength": 1},
+        "ref": {"type": "string", "minLength": 1},
+        "media_type": {"type": "string", "minLength": 1},
+        "segment_id": {"type": "string", "minLength": 1}
+      }
+    },
+    "diagnostic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "severity", "message"],
+      "properties": {
+        "code": {"type": "string", "minLength": 1},
+        "severity": {"enum": ["info", "warning", "error"]},
+        "message": {"type": "string", "minLength": 1},
+        "segment_id": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

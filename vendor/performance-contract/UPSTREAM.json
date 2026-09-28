@@ -1,0 +1,16 @@
+{
+  "repository": "ryonakayama234/morphoacoustics",
+  "contract": "performance-contract/v0",
+  "commit": "8435e61af5b3893de6c7bfe48861484ccbc15a90",
+  "path": "contracts/performance/v0",
+  "files": {
+    "common.schema.json": "096ccb66560c767ef19c50d06d92fa0cda2124ad",
+    "character.schema.json": "3b42762edc3e0c26ea92af6531df9168212b3f54",
+    "script.schema.json": "b48b4a5553c235961707b9dfb91ec80ab1709df8",
+    "direction.schema.json": "65ad3233c0aa943679ec708afa1c8afa9ac1e7fc",
+    "performance-request.schema.json": "aa8af255e5e929194f17632ba1ca3cd83a2ec9b5",
+    "performance-result.schema.json": "a098802f898ee8644c8214d039484e8a4b6385cc",
+    "examples/request.json": "88e810fcf6544c897280931ad39eae22dc71d6e7",
+    "examples/result.mock.json": "8233cea9ec77fd7371387257c0c15262f9f97f7e"
+  }
+}
