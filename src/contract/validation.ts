@@ -5,7 +5,7 @@ import scriptSchema from '../../vendor/performance-contract/v0/script.schema.jso
 import directionSchema from '../../vendor/performance-contract/v0/direction.schema.json';
 import requestSchema from '../../vendor/performance-contract/v0/performance-request.schema.json';
 import resultSchema from '../../vendor/performance-contract/v0/performance-result.schema.json';
-import { semanticRequestIssues } from './semanticValidation';
+import { semanticRequestIssues, semanticResultIssues } from './semanticValidation';
 
 // Keep Ajv strictness enabled, except strictRequired. The upstream schema uses
 // `required` inside anyOf branches while defining those properties on the parent
@@ -44,8 +44,12 @@ export function validatePerformanceRequest(input: unknown): ValidationResult {
     : { ok: false, issues: semanticIssues };
 }
 
-export function validatePerformanceResult(input: unknown): ValidationResult {
-  return resultValidator(input)
+export function validatePerformanceResult(input: unknown, request?: unknown): ValidationResult {
+  if (!resultValidator(input)) {
+    return { ok: false, issues: formatAjvErrors(resultValidator.errors) };
+  }
+  const semanticIssues = semanticResultIssues(input, request);
+  return semanticIssues.length === 0
     ? { ok: true, issues: [] }
-    : { ok: false, issues: formatAjvErrors(resultValidator.errors) };
+    : { ok: false, issues: semanticIssues };
 }
