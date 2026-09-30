@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import mioRequest from '../vendor/performance-contract/v0/examples/request.json';
 import upstream from '../vendor/performance-contract/UPSTREAM.json';
 import { FixedMorphoacousticsBackend } from './backend/FixedMorphoacousticsBackend';
+import { resolveFixedAudioRef } from './backend/fixedAudioAssets';
 import { MockBackend } from './backend/MockBackend';
 import type { PerformanceBackend } from './backend/PerformanceBackend';
 import type { PerformanceRequestV0, PerformanceResultV0 } from './contract/types';
@@ -126,6 +127,40 @@ function backendLabel(mode: BackendMode): string {
   if (mode === 'real-uniform') return 'REAL · M2 uniform';
   if (mode === 'real-constricted') return 'REAL · M2 constricted';
   return 'MOCK BACKEND';
+}
+
+function AudioPlayer({ artifact }: { artifact: AudioArtifact }) {
+  const [resolved, setResolved] = useState<{ url: string; filename: string } | null>(null);
+  const [resolveError, setResolveError] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    setResolved(null);
+    setResolveError('');
+    resolveFixedAudioRef(artifact.ref)
+      .then((asset) => {
+        if (cancelled) return;
+        setResolved(asset ?? { url: artifact.ref, filename: 'take.wav' });
+      })
+      .catch((cause) => {
+        if (!cancelled) setResolveError(cause instanceof Error ? cause.message : String(cause));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [artifact.ref]);
+
+  if (resolveError) return <p className="errors">音声artifactの復元に失敗しました: {resolveError}</p>;
+  if (!resolved) return <p>音声artifactを検証・復元中…</p>;
+  return (
+    <div>
+      <audio controls preload="metadata" src={resolved.url}>
+        <source src={resolved.url} type={artifact.mediaType} />
+        Audio playback is not supported by this browser.
+      </audio>
+      <p><a href={resolved.url} download={resolved.filename}>WAVをダウンロード</a></p>
+    </div>
+  );
 }
 
 export default function App() {
@@ -395,8 +430,7 @@ export default function App() {
                       <div><dt>Segments</dt><dd>{timeline(take.result).length}</dd></div>
                       <div><dt>Diagnostics</dt><dd>{diagnostics(take.result).length}</dd></div>
                     </dl>
-                    {audio && <audio controls preload="metadata" src={audio.ref}>Audio playback is not supported by this browser.</audio>}
-                    {audio && <p><a href={audio.ref} download>WAVをダウンロード</a></p>}
+                    {audio && <AudioPlayer artifact={audio} />}
                     <div className="take-actions">
                       <button type="button" className={compareA === take.result.take_id ? 'selected' : ''} onClick={() => setCompareA(take.result.take_id)}>A</button>
                       <button type="button" className={compareB === take.result.take_id ? 'selected' : ''} onClick={() => setCompareB(take.result.take_id)}>B</button>
@@ -426,7 +460,7 @@ export default function App() {
 
       <footer className="footer-note">
         Contract <code>{mioRequest.schema_version}</code> · upstream <code>{upstream.commit.slice(0, 12)}</code> ·
-        草稿とTake履歴はこのブラウザに保存されます。固定音声artifactはversioned pathで再取得し、物理solver固有の状態はStudio草稿へ保存しません。
+        草稿とTake履歴はこのブラウザに保存されます。固定音声artifactはversioned refから再検証・復元し、物理solver固有の状態はStudio草稿へ保存しません。
       </footer>
     </main>
   );
@@ -451,8 +485,7 @@ function TakeComparison({ label, take }: { label: string; take?: TakeRecord }) {
       {audio && (
         <>
           <h3>Audio</h3>
-          <audio controls preload="metadata" src={audio.ref}>Audio playback is not supported by this browser.</audio>
-          <p><a href={audio.ref} download>WAVをダウンロード</a></p>
+          <AudioPlayer artifact={audio} />
         </>
       )}
       <h3>Body binding</h3>
