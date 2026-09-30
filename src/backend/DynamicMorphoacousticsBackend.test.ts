@@ -33,8 +33,11 @@ function dynamicRequest(pace: number): PerformanceRequestV0 {
 }
 
 function artifactRef(result: Awaited<ReturnType<DynamicMorphoacousticsBackend['perform']>>, kind: string): string | undefined {
-  const artifact = result.artifacts.find((item) => item.kind === kind);
-  return artifact?.ref;
+  const artifacts = Array.isArray(result.artifacts) ? result.artifacts : [];
+  const artifact = artifacts
+    .map((item) => (typeof item === 'object' && item !== null ? item as Record<string, unknown> : {}))
+    .find((item) => item.kind === kind);
+  return typeof artifact?.ref === 'string' ? artifact.ref : undefined;
 }
 
 describe('DynamicMorphoacousticsBackend', () => {
