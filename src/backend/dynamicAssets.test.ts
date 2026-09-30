@@ -9,7 +9,8 @@ const CASES = [
     paths: [
       'public/x1b/exp010-373ff710-wide-body-fast.wav.gz.b64.part1',
       'public/x1b/exp010-373ff710-wide-body-fast.wav.gz.b64.part2',
-      'public/x1b/exp010-373ff710-wide-body-fast.wav.gz.b64.part3',
+      'public/x1b/exp010-373ff710-wide-body-fast.wav.gz.b64.part3a',
+      'public/x1b/exp010-373ff710-wide-body-fast.wav.gz.b64.part3b',
       'public/x1b/exp010-373ff710-wide-body-fast.wav.gz.b64.part4',
     ],
     sha256: 'a71937a8cdb10590e7decc4f672ecaeed3c15e1560daf849932e883734c544ec',
