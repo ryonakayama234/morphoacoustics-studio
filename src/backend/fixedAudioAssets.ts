@@ -40,7 +40,11 @@ async function sha256Hex(buffer: ArrayBuffer): Promise<string> {
 
 async function materialize(asset: EmbeddedAudio): Promise<{ url: string; filename: string }> {
   const compressed = decodeBase64(asset.gzipBase64);
-  const stream = new Blob([compressed]).stream().pipeThrough(new DecompressionStream('gzip'));
+  const compressedBuffer = compressed.buffer.slice(
+    compressed.byteOffset,
+    compressed.byteOffset + compressed.byteLength,
+  ) as ArrayBuffer;
+  const stream = new Blob([compressedBuffer]).stream().pipeThrough(new DecompressionStream('gzip'));
   const buffer = await new Response(stream).arrayBuffer();
   const digest = await sha256Hex(buffer);
   if (digest !== asset.sha256) throw new Error(`embedded fixed audio digest mismatch: ${digest}`);
