@@ -24,13 +24,13 @@ type Fixture = Readonly<{
 const FIXTURES: Record<FixedBodyFixture, Fixture> = {
   uniform: {
     id: 'uniform',
-    audioRef: './artifacts/x1a/m2-uniform.wav',
+    audioRef: '/artifacts/x1a/exp009-40de0d10-uniform.wav',
     bodyBindingRef: `body-binding://experiment-009/uniform@${MODEL_COMMIT}`,
     label: 'Experiment 009 uniform fixed tract',
   },
   constricted: {
     id: 'constricted',
-    audioRef: './artifacts/x1a/m2-constricted.wav',
+    audioRef: '/artifacts/x1a/exp009-40de0d10-constricted.wav',
     bodyBindingRef: `body-binding://experiment-009/constricted@${MODEL_COMMIT}`,
     label: 'Experiment 009 fixed constriction tract',
   },
