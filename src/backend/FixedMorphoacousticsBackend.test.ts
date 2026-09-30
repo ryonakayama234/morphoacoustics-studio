@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import mioRequest from '../../vendor/performance-contract/v0/examples/request.json';
+import { FIXED_AUDIO_REFS } from './fixedAudioAssets';
 import { FixedMorphoacousticsBackend } from './FixedMorphoacousticsBackend';
 import type { PerformanceRequestV0 } from '../contract/types';
 import { validatePerformanceResult } from '../contract/validation';
@@ -30,7 +31,7 @@ describe('FixedMorphoacousticsBackend', () => {
     expect(result.artifacts).toEqual([
       {
         kind: 'audio',
-        ref: '/artifacts/x1a/exp009-40de0d10-uniform.wav',
+        ref: FIXED_AUDIO_REFS.uniform,
         media_type: 'audio/wav',
         segment_id: 's1',
       },
@@ -62,8 +63,8 @@ describe('FixedMorphoacousticsBackend', () => {
     const constricted = await new FixedMorphoacousticsBackend('constricted').perform(request);
 
     expect(uniform.take_id).not.toBe(constricted.take_id);
-    expect(JSON.stringify(uniform.artifacts)).toContain('exp009-40de0d10-uniform.wav');
-    expect(JSON.stringify(constricted.artifacts)).toContain('exp009-40de0d10-constricted.wav');
+    expect(uniform.artifacts[0]).toEqual(expect.objectContaining({ ref: FIXED_AUDIO_REFS.uniform }));
+    expect(constricted.artifacts[0]).toEqual(expect.objectContaining({ ref: FIXED_AUDIO_REFS.constricted }));
     expect(uniform.provenance).not.toEqual(constricted.provenance);
   });
 
