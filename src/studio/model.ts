@@ -107,6 +107,7 @@ export function moveSegment(
 export function buildPerformanceRequest(
   draft: StudioDraft,
   serial: number,
+  requestedCapabilities: readonly string[] = ['timeline', 'diagnostics'],
 ): PerformanceRequestV0 {
   const segmentOverrides = draft.segments
     .filter((segment) => segment.overrideNote.trim().length > 0)
@@ -151,7 +152,7 @@ export function buildPerformanceRequest(
       segment_overrides: segmentOverrides,
     },
     seed: draft.seed,
-    requested_capabilities: ['timeline', 'diagnostics'],
+    requested_capabilities: [...requestedCapabilities],
   } as PerformanceRequestV0;
 }
 
