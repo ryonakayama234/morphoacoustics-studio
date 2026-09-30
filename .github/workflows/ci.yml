@@ -13,6 +13,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22.12.0'
+      - name: Use npm version compatible with the Vite/Vitest peer graph
+        run: npm install --global npm@11.6.0
       - run: npm install --no-audit --no-fund
       - run: npm test
       - run: npm run build
