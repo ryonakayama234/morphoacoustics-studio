@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import mioRequest from '../vendor/performance-contract/v0/examples/request.json';
 import upstream from '../vendor/performance-contract/UPSTREAM.json';
+import { DynamicMorphoacousticsBackend } from './backend/DynamicMorphoacousticsBackend';
+import { resolveDynamicAssetRef } from './backend/dynamicAssets';
 import { FixedMorphoacousticsBackend } from './backend/FixedMorphoacousticsBackend';
 import { resolveFixedAudioRef } from './backend/fixedAudioAssets';
 import { MockBackend } from './backend/MockBackend';
@@ -18,7 +20,7 @@ import {
 
 const STORAGE_KEY = 'morphoacoustics-studio:s2-workspace:v1';
 
-type BackendMode = 'mock' | 'real-uniform' | 'real-constricted';
+type BackendMode = 'mock' | 'real-uniform' | 'real-constricted' | 'dynamic-wide';
 
 type Workspace = {
   draft: StudioDraft;
@@ -29,7 +31,7 @@ type Workspace = {
 
 type UnknownRecord = Record<string, unknown>;
 
-type AudioArtifact = {
+type ArtifactAsset = {
   ref: string;
   mediaType: string;
 };
@@ -62,6 +64,7 @@ function loadWorkspace(): Workspace {
     }
     const backendMode: BackendMode = parsed.backendMode === 'real-uniform'
       || parsed.backendMode === 'real-constricted'
+      || parsed.backendMode === 'dynamic-wide'
       ? parsed.backendMode
       : 'mock';
     return {
@@ -99,13 +102,22 @@ function artifacts(result: PerformanceResultV0): UnknownRecord[] {
   return Array.isArray(value) ? value.map(asRecord) : [];
 }
 
-function audioArtifact(result: PerformanceResultV0): AudioArtifact | undefined {
-  const artifact = artifacts(result).find((item) => item.kind === 'audio' && typeof item.ref === 'string');
+function artifactOfKind(result: PerformanceResultV0, kind: string): ArtifactAsset | undefined {
+  const artifact = artifacts(result).find((item) => item.kind === kind && typeof item.ref === 'string');
   if (!artifact || typeof artifact.ref !== 'string') return undefined;
   return {
     ref: artifact.ref,
-    mediaType: typeof artifact.media_type === 'string' ? artifact.media_type : 'audio/wav',
+    mediaType: typeof artifact.media_type === 'string' ? artifact.media_type : 'application/octet-stream',
   };
+}
+
+function audioArtifact(result: PerformanceResultV0): ArtifactAsset | undefined {
+  const artifact = artifactOfKind(result, 'audio');
+  return artifact ? { ...artifact, mediaType: artifact.mediaType === 'application/octet-stream' ? 'audio/wav' : artifact.mediaType } : undefined;
+}
+
+function traceArtifact(result: PerformanceResultV0): ArtifactAsset | undefined {
+  return artifactOfKind(result, 'dynamic-trace');
 }
 
 function bodyBinding(result: PerformanceResultV0): string {
@@ -120,16 +132,25 @@ function requestDirectionSummary(request: PerformanceRequestV0): string {
 function backendFor(mode: BackendMode): PerformanceBackend {
   if (mode === 'real-uniform') return new FixedMorphoacousticsBackend('uniform');
   if (mode === 'real-constricted') return new FixedMorphoacousticsBackend('constricted');
+  if (mode === 'dynamic-wide') return new DynamicMorphoacousticsBackend();
   return new MockBackend();
 }
 
 function backendLabel(mode: BackendMode): string {
   if (mode === 'real-uniform') return 'REAL · M2 uniform';
   if (mode === 'real-constricted') return 'REAL · M2 constricted';
+  if (mode === 'dynamic-wide') return 'REAL · M3 dynamic';
   return 'MOCK BACKEND';
 }
 
-function AudioPlayer({ artifact }: { artifact: AudioArtifact }) {
+async function resolveAudioRef(ref: string): Promise<{ url: string; filename: string } | undefined> {
+  const fixed = await resolveFixedAudioRef(ref);
+  if (fixed) return fixed;
+  const dynamic = await resolveDynamicAssetRef(ref);
+  return dynamic ? { url: dynamic.url, filename: dynamic.filename } : undefined;
+}
+
+function AudioPlayer({ artifact }: { artifact: ArtifactAsset }) {
   const [resolved, setResolved] = useState<{ url: string; filename: string } | null>(null);
   const [resolveError, setResolveError] = useState('');
 
@@ -137,7 +158,7 @@ function AudioPlayer({ artifact }: { artifact: AudioArtifact }) {
     let cancelled = false;
     setResolved(null);
     setResolveError('');
-    resolveFixedAudioRef(artifact.ref)
+    resolveAudioRef(artifact.ref)
       .then((asset) => {
         if (cancelled) return;
         setResolved(asset ?? { url: artifact.ref, filename: 'take.wav' });
@@ -161,6 +182,32 @@ function AudioPlayer({ artifact }: { artifact: AudioArtifact }) {
       <p><a href={resolved.url} download={resolved.filename}>WAVをダウンロード</a></p>
     </div>
   );
+}
+
+function TraceDownload({ artifact }: { artifact: ArtifactAsset }) {
+  const [resolved, setResolved] = useState<{ url: string; filename: string } | null>(null);
+  const [resolveError, setResolveError] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    setResolved(null);
+    setResolveError('');
+    resolveDynamicAssetRef(artifact.ref)
+      .then((asset) => {
+        if (cancelled) return;
+        setResolved(asset ? { url: asset.url, filename: asset.filename } : null);
+      })
+      .catch((cause) => {
+        if (!cancelled) setResolveError(cause instanceof Error ? cause.message : String(cause));
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [artifact.ref]);
+
+  if (resolveError) return <p className="errors">trace artifactの復元に失敗しました: {resolveError}</p>;
+  if (!resolved) return <code>{artifact.ref}</code>;
+  return <a href={resolved.url} download={resolved.filename}>Gesture / physical trace CSVをダウンロード</a>;
 }
 
 export default function App() {
@@ -225,11 +272,15 @@ export default function App() {
     }));
   };
 
-  const useFixedDemoScript = () => {
+  const useSupportedDemoScript = () => {
     setDraft((current) => ({
       ...current,
       segments: [{ segmentId: 's1', text: 'あー', overrideNote: '' }],
     }));
+  };
+
+  const useValidatedPace = (pace: 0.75 | 1.25) => {
+    setDraft((current) => ({ ...current, pace }));
   };
 
   const perform = async () => {
@@ -238,7 +289,9 @@ export default function App() {
     try {
       const capabilities = backendMode === 'mock'
         ? ['timeline', 'diagnostics']
-        : ['audio', 'timeline', 'diagnostics'];
+        : backendMode === 'dynamic-wide'
+          ? ['audio', 'timeline', 'diagnostics', 'gesture_trace', 'physical_trace']
+          : ['audio', 'timeline', 'diagnostics'];
       const request = buildPerformanceRequest(draft, serial, capabilities);
       const take = await performTake(backend, request);
       setTakes((current) => [...current, take]);
@@ -278,7 +331,7 @@ export default function App() {
     <main className="studio-shell">
       <header className="studio-header">
         <div>
-          <p className="eyebrow">Morphoacoustics Studio · X1a</p>
+          <p className="eyebrow">Morphoacoustics Studio · X1b</p>
           <h1>{draft.characterName || 'Untitled Character'}</h1>
           <p className="description">Character → Script → Direction → Perform → Take → Compare</p>
         </div>
@@ -325,7 +378,11 @@ export default function App() {
                 <h2 id="script-heading">台本</h2>
               </div>
               <div className="header-actions">
-                {backendMode !== 'mock' && <button className="secondary" type="button" onClick={useFixedDemoScript}>X1a対応「あー」</button>}
+                {backendMode !== 'mock' && (
+                  <button className="secondary" type="button" onClick={useSupportedDemoScript}>
+                    {backendMode === 'dynamic-wide' ? 'X1b対応「あー」' : 'X1a対応「あー」'}
+                  </button>
+                )}
                 <button className="secondary" type="button" onClick={addSegment}>区間を追加</button>
               </div>
             </div>
@@ -359,6 +416,12 @@ export default function App() {
                 <p className="step-label">03 · Direction</p>
                 <h2 id="direction-heading">演出</h2>
               </div>
+              {backendMode === 'dynamic-wide' && (
+                <div className="header-actions">
+                  <button className="secondary" type="button" onClick={() => useValidatedPace(0.75)}>Validated slow · 0.75</button>
+                  <button className="secondary" type="button" onClick={() => useValidatedPace(1.25)}>Validated fast · 1.25</button>
+                </div>
+              )}
             </div>
             <label>
               演出メモ
@@ -378,6 +441,11 @@ export default function App() {
                 <input type="number" step="1" value={draft.seed} onChange={(event) => patchDraft({ seed: Number(event.target.value) })} />
               </label>
             </div>
+            {backendMode === 'dynamic-wide' && (
+              <p>
+                X1bではpaceだけを物理実行へ写像します。検証済みなのは0.75→slow/90 msと1.25→fast/30 msの2点だけで、中間値は補間せずUNSUPPORTEDです。
+              </p>
+            )}
           </section>
 
           <section className="perform-panel" aria-labelledby="perform-heading">
@@ -385,14 +453,15 @@ export default function App() {
               <p className="step-label">04 · Perform</p>
               <h2 id="perform-heading">Takeを作る</h2>
               <p>
-                MockとM2由来の固定実音声を同じPerformanceResult / Take経路で扱います。固定実音声ではDirectionは保存されますが、まだ物理へ反映しません。
+                Mock、M2固定音声、M3動的音声を同じPerformanceResult / Take経路で扱います。X1b dynamicではpaceだけがversioned integration policyを介して検証済みGesture timecourseへ反映されます。
               </p>
               <label>
-                Backend / X1a fixture
+                Backend / integration fixture
                 <select value={backendMode} onChange={(event) => setBackendMode(event.target.value as BackendMode)}>
                   <option value="mock">MockBackend</option>
                   <option value="real-uniform">Real · Experiment 009 uniform body</option>
                   <option value="real-constricted">Real · Experiment 009 constricted body</option>
+                  <option value="dynamic-wide">Real · Experiment 010 wide-body dynamic pace</option>
                 </select>
               </label>
             </div>
@@ -450,7 +519,7 @@ export default function App() {
             <p className="step-label">06 · Compare</p>
             <h2 id="compare-heading">Take A / B</h2>
           </div>
-          <span>入力・音声・timeline・結果・provenanceを別々に確認</span>
+          <span>入力・音声・timeline・trace・結果・provenanceを別々に確認</span>
         </div>
         <div className="comparison-grid">
           <TakeComparison label="A" take={selectedA} />
@@ -460,7 +529,7 @@ export default function App() {
 
       <footer className="footer-note">
         Contract <code>{mioRequest.schema_version}</code> · upstream <code>{upstream.commit.slice(0, 12)}</code> ·
-        草稿とTake履歴はこのブラウザに保存されます。固定音声artifactはversioned refから再検証・復元し、物理solver固有の状態はStudio草稿へ保存しません。
+        草稿とTake履歴はこのブラウザに保存されます。実音声/trace artifactはversioned refから再検証・復元し、物理solver固有の状態はStudio草稿へ保存しません。
       </footer>
     </main>
   );
@@ -471,6 +540,7 @@ function TakeComparison({ label, take }: { label: string; take?: TakeRecord }) {
     return <div className="compare-card empty-state">Take {label} を選択してください。</div>;
   }
   const audio = audioArtifact(take.result);
+  const trace = traceArtifact(take.result);
   return (
     <article className="compare-card">
       <div className="take-title-row">
@@ -486,6 +556,13 @@ function TakeComparison({ label, take }: { label: string; take?: TakeRecord }) {
         <>
           <h3>Audio</h3>
           <AudioPlayer artifact={audio} />
+        </>
+      )}
+      {trace && (
+        <>
+          <h3>Gesture / physical trace</h3>
+          <TraceDownload artifact={trace} />
+          <p><code>{trace.ref}</code></p>
         </>
       )}
       <h3>Body binding</h3>
