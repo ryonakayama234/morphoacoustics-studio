@@ -1,4 +1,5 @@
 import type { PerformanceBackend } from './PerformanceBackend';
+import { FIXED_AUDIO_REFS } from './fixedAudioAssets';
 import type { PerformanceRequestV0, PerformanceResultV0 } from '../contract/types';
 import { deterministicSha256, INPUT_DIGEST_ALGORITHM } from '../contract/canonicalJson';
 
@@ -24,13 +25,13 @@ type Fixture = Readonly<{
 const FIXTURES: Record<FixedBodyFixture, Fixture> = {
   uniform: {
     id: 'uniform',
-    audioRef: '/artifacts/x1a/exp009-40de0d10-uniform.wav',
+    audioRef: FIXED_AUDIO_REFS.uniform,
     bodyBindingRef: `body-binding://experiment-009/uniform@${MODEL_COMMIT}`,
     label: 'Experiment 009 uniform fixed tract',
   },
   constricted: {
     id: 'constricted',
-    audioRef: '/artifacts/x1a/exp009-40de0d10-constricted.wav',
+    audioRef: FIXED_AUDIO_REFS.constricted,
     bodyBindingRef: `body-binding://experiment-009/constricted@${MODEL_COMMIT}`,
     label: 'Experiment 009 fixed constriction tract',
   },
