@@ -27,7 +27,8 @@ const EMBEDDED: Record<string, EmbeddedAsset> = {
     sourcePaths: [
       'x1b/exp010-373ff710-wide-body-fast.wav.gz.b64.part1',
       'x1b/exp010-373ff710-wide-body-fast.wav.gz.b64.part2',
-      'x1b/exp010-373ff710-wide-body-fast.wav.gz.b64.part3',
+      'x1b/exp010-373ff710-wide-body-fast.wav.gz.b64.part3a',
+      'x1b/exp010-373ff710-wide-body-fast.wav.gz.b64.part3b',
       'x1b/exp010-373ff710-wide-body-fast.wav.gz.b64.part4',
     ],
     filename: 'exp010-373ff710-wide-body-fast.wav',
