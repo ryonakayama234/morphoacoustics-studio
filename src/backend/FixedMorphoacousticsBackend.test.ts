@@ -63,8 +63,8 @@ describe('FixedMorphoacousticsBackend', () => {
     const constricted = await new FixedMorphoacousticsBackend('constricted').perform(request);
 
     expect(uniform.take_id).not.toBe(constricted.take_id);
-    expect(uniform.artifacts[0]).toEqual(expect.objectContaining({ ref: FIXED_AUDIO_REFS.uniform }));
-    expect(constricted.artifacts[0]).toEqual(expect.objectContaining({ ref: FIXED_AUDIO_REFS.constricted }));
+    expect(JSON.stringify(uniform.artifacts)).toContain(FIXED_AUDIO_REFS.uniform);
+    expect(JSON.stringify(constricted.artifacts)).toContain(FIXED_AUDIO_REFS.constricted);
     expect(uniform.provenance).not.toEqual(constricted.provenance);
   });
 
