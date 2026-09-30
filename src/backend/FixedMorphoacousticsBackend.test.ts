@@ -30,7 +30,7 @@ describe('FixedMorphoacousticsBackend', () => {
     expect(result.artifacts).toEqual([
       {
         kind: 'audio',
-        ref: './artifacts/x1a/m2-uniform.wav',
+        ref: '/artifacts/x1a/exp009-40de0d10-uniform.wav',
         media_type: 'audio/wav',
         segment_id: 's1',
       },
@@ -62,8 +62,8 @@ describe('FixedMorphoacousticsBackend', () => {
     const constricted = await new FixedMorphoacousticsBackend('constricted').perform(request);
 
     expect(uniform.take_id).not.toBe(constricted.take_id);
-    expect(JSON.stringify(uniform.artifacts)).toContain('m2-uniform.wav');
-    expect(JSON.stringify(constricted.artifacts)).toContain('m2-constricted.wav');
+    expect(JSON.stringify(uniform.artifacts)).toContain('exp009-40de0d10-uniform.wav');
+    expect(JSON.stringify(constricted.artifacts)).toContain('exp009-40de0d10-constricted.wav');
     expect(uniform.provenance).not.toEqual(constricted.provenance);
   });
 
