@@ -1,0 +1,69 @@
+name: X2a real physical integration
+
+on:
+  pull_request:
+    paths:
+      - "server/**"
+      - "src/backend/LiveExperimentalBackend.ts"
+      - "src/App.tsx"
+      - ".github/workflows/live-x2a.yml"
+      - "vendor/performance-contract/**"
+  workflow_dispatch:
+
+jobs:
+  fresh-physical-takes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout Studio
+        uses: actions/checkout@v4
+        with:
+          path: studio
+      - name: Checkout audited Core (immutable)
+        uses: actions/checkout@v4
+        with:
+          repository: ryonakayama234/morphoacoustics
+          ref: a75418770ed28cbd301d554171a6b60ee5a05ee9
+          path: core
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.12.0'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install audited stacks
+        run: |
+          npm install --global npm@11.6.0
+          npm --prefix studio install --no-audit --no-fund
+          python -m pip install 'numpy==2.4.6'
+          python -m pip install -e './core[dev]'
+          test "$(git -C core rev-parse HEAD)" = "a75418770ed28cbd301d554171a6b60ee5a05ee9"
+          python -c "import numpy; assert numpy.__version__ == '2.4.6'"
+      - name: Live service + two fresh WAV Takes + no-fallback verification
+        env:
+          MORPHO_CORE_DIR: ${{ github.workspace }}/core
+          MORPHO_LIVE_DATA_DIR: ${{ github.workspace }}/generated-live-takes
+        run: |
+          set -euo pipefail
+          node studio/server/live-server.mjs > live-server.log 2>&1 &
+          SERVICE_PID=$!
+          trap 'kill "$SERVICE_PID" 2>/dev/null || true' EXIT
+          ready=0
+          for i in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8765/live/health > /dev/null; then ready=1; break; fi
+            sleep 1
+          done
+          test "$ready" = 1 || { cat live-server.log; exit 1; }
+          node studio/server/live-smoke.mjs
+          ls -lh generated-live-takes/artifacts
+          test "$(find generated-live-takes/takes -type f | wc -l)" -eq 3
+      - name: Upload trace and service diagnostics for review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: x2a-studio-live-evidence
+          path: |
+            live-server.log
+            generated-live-takes/takes/*.json
+          if-no-files-found: warn
