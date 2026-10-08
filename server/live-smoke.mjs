@@ -37,7 +37,7 @@ assert.equal(health.status, 'ready');
 assert.equal(health.core_commit, 'a75418770ed28cbd301d554171a6b60ee5a05ee9');
 const a = await perform(req);
 const b = await perform({ ...req, request_id: 'x2a_integration_smoke_2' });
-assert.equal(a.job_status, 'SUCCEEDED');
+assert.equal(a.job_status, 'SUCCEEDED', JSON.stringify(a.diagnostics));
 assert.equal(a.realization_outcome, 'FEASIBLE');
 assert.equal(b.realization_outcome, 'FEASIBLE');
 assert.notEqual(a.take_id, b.take_id);
