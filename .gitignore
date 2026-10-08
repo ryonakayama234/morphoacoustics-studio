@@ -4,3 +4,6 @@ dist/
 coverage/
 *.local
 .DS_Store
+
+# Generated local-only immutable physical Takes
+.morpho-live-data/
