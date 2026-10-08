@@ -14,7 +14,7 @@ async function perform(request) {
   const r = await fetch(base + '/live/perform', {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(request),
   });
-  assert.equal(r.status, 200, await r.text());
+  if (r.status !== 200) throw new Error('Live HTTP ' + r.status + ': ' + await r.text());
   return r.json();
 }
 function artifact(result, kind) {
