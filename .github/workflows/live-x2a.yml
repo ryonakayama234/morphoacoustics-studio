@@ -58,6 +58,17 @@ jobs:
           node studio/server/live-smoke.mjs
           ls -lh generated-live-takes/artifacts
           test "$(find generated-live-takes/takes -type f | wc -l)" -eq 2
+          kill "$SERVICE_PID"
+          wait "$SERVICE_PID" || true
+          node studio/server/live-server.mjs > live-server-restarted.log 2>&1 &
+          SERVICE_PID=$!
+          ready=0
+          for i in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:8765/live/health > /dev/null; then ready=1; break; fi
+            sleep 1
+          done
+          test "$ready" = 1 || { cat live-server-restarted.log; exit 1; }
+          node studio/server/live-restart-smoke.mjs
       - name: Upload trace and service diagnostics for review
         if: always()
         uses: actions/upload-artifact@v4
@@ -65,5 +76,10 @@ jobs:
           name: x2a-studio-live-evidence
           path: |
             live-server.log
+            live-server-restarted.log
             generated-live-takes/takes/*.json
+            generated-live-takes/artifacts/*.wav
+            generated-live-takes/artifacts/*.csv
+            generated-live-takes/artifacts/*.npy
+            generated-live-takes/artifacts/*.json
           if-no-files-found: warn
