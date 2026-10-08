@@ -11,7 +11,9 @@
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "live:server": "node server/live-server.mjs",
+    "test:bridge": "node --test server/live-server.test.mjs"
   },
   "dependencies": {
     "ajv": "8.20.0",
