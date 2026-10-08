@@ -186,7 +186,7 @@ export async function performCoreBridge(request) {
   }
   if (outcome === 'FEASIBLE') {
     const diskManifest = JSON.parse(await fs.readFile(path.join(outputDir, 'result.json'), 'utf8'));
-    if (JSON.stringify(diskManifest) !== JSON.stringify(core)) throw new Error('Core result differs from completion manifest.');
+    if (digest(diskManifest) !== digest(core)) throw new Error('Core result differs from completion manifest.');
     if (core.schema_version !== 'morpho-live/v1' || core.segment_id !== map.mapped.segment_id
       || core.execution?.acoustic_transfer_calls !== 102 || core.execution?.waveform_samples !== 24000
       || core.execution?.sample_rate_hz !== 48000 || !Array.isArray(core.artifacts)
