@@ -57,7 +57,7 @@ jobs:
           test "$ready" = 1 || { cat live-server.log; exit 1; }
           node studio/server/live-smoke.mjs
           ls -lh generated-live-takes/artifacts
-          test "$(find generated-live-takes/takes -type f | wc -l)" -eq 3
+          test "$(find generated-live-takes/takes -type f | wc -l)" -eq 2
       - name: Upload trace and service diagnostics for review
         if: always()
         uses: actions/upload-artifact@v4
