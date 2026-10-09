@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { CORE_SHA, mapCreativeRequest } from './live-server.mjs';
+import { CORE_SHA, mapCreativeRequest, makeSingleFlightGate } from './live-server.mjs';
 
 const dir = path.dirname(fileURLToPath(import.meta.url));
 const example = JSON.parse(readFileSync(path.join(dir, '../vendor/performance-contract/v0/examples/request.json'), 'utf8'));
@@ -45,4 +45,23 @@ test('unsupported script, number of segments, speaker, seed, and creative contro
     assert.equal(outcome.mapped, undefined, JSON.stringify(v));
     assert.equal(typeof outcome.reason, 'string');
   }
+});
+
+test('atomic single-flight gate rejects concurrent entrants while first body is still pending', async () => {
+  const gate = makeSingleFlightGate();
+  let admitted = 0;
+  const attempts = Array.from({ length: 32 }, async () => {
+    if (!gate.claim()) return false;
+    admitted++;
+    try { await Promise.resolve(); return true; }
+    finally { gate.release(); }
+  });
+  const results = await Promise.all(attempts);
+  assert.equal(admitted, 1);
+  assert.equal(results.filter(Boolean).length, 1);
+  assert.equal(gate.claim(), true, 'worker must be released after completion');
+  assert.equal(gate.claim(), false, 'second claim must not pass until release');
+  gate.release();
+  assert.equal(gate.claim(), true, 'worker can accept another request after release');
+  gate.release();
 });
