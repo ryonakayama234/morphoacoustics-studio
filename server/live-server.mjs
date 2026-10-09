@@ -21,6 +21,19 @@ const DATA = path.resolve(process.env.MORPHO_LIVE_DATA_DIR || path.join(STUDIO_R
 const CORE = path.resolve(process.env.MORPHO_CORE_DIR || path.join(STUDIO_ROOT, '..', 'morphoacoustics'));
 const PYTHON = process.env.MORPHO_PYTHON || 'python';
 
+/** One local physical worker; claim must happen before any asynchronous body read. */
+export function makeSingleFlightGate() {
+  let occupied = false;
+  return {
+    claim() {
+      if (occupied) return false;
+      occupied = true;
+      return true;
+    },
+    release() { occupied = false; },
+  };
+}
+
 function sha(bytes) { return createHash('sha256').update(bytes).digest('hex'); }
 function canonical(value) {
   if (Array.isArray(value)) return value.map(canonical);
@@ -261,7 +274,7 @@ export async function startServer() {
     await fs.mkdir(path.join(DATA, folder), { recursive: true });
   }
   const validate = await schemas();
-  let busy = false;
+  const solverGate = makeSingleFlightGate();
   const server = createServer(async (req, res) => {
     try {
       if (req.headers.origin && !['http://127.0.0.1:5173', 'http://localhost:5173'].includes(req.headers.origin)) {
@@ -279,17 +292,16 @@ export async function startServer() {
         return res.end(data);
       }
       if (req.method !== 'POST' || req.url !== '/live/perform') return respond(res, 404, { error: 'Not found' });
-      if (busy) return respond(res, 429, { error: 'Physical solver busy. Try again.' });
+      if (!solverGate.claim()) return respond(res, 429, { error: 'Physical solver busy. Try again.' });
       // Claim the sole worker synchronously, BEFORE awaiting the request body.
       // Otherwise two simultaneous body streams can both pass the busy check.
-      busy = true;
       try {
         const input = await getBody(req);
         if (!validate(input)) return respond(res, 400, { outcome: 'INVALID', issues: validate.errors });
         const request = input;
         const result = await performCoreBridge(request).catch((error) => failure(request, error instanceof Error ? error.message : String(error)));
         return respond(res, 200, result);
-      } finally { busy = false; }
+      } finally { solverGate.release(); }
     } catch (error) {
       return respond(res, 400, { error: error instanceof Error ? error.message : String(error) });
     }
