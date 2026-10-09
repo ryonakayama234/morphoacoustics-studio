@@ -24,7 +24,12 @@ exposed as a selectable body; the scientific Core test keeps that gate separate.
   v0 snapshot is read-only in Studio.
 - The new Node localhost service binds to 127.0.0.1:8765 and Vite proxies /live.
   It accepts validated JSON, never launches user-selected commands, and uses a
-  fixed Python entrypoint with an exact immutable Core git HEAD check.
+  fixed Python entrypoint with an exact audited Core git commit check.
+  Before service startup and every fresh physical run, the bridge rejects any
+  modified/deleted tracked or untracked non-ignored Core files; it checks again
+  after the Python subprocess exits, before accepting a successful Take. This
+  is a fail-closed local reproducibility guard, not a hardened filesystem sandbox.
+  Core's ignored virtual environments, Python caches and build outputs are allowed.
 - Experimental live mode explicitly disables the unsupported Direction controls.
   No energy/pace/emotion/notes are quietly turned into uncalibrated physics.
 - The Core completion marker result.json and each SHA-256/byte-size check must
@@ -83,6 +88,10 @@ reload and listen again. Do not label the generated sound natural Japanese.
    and no-fallback for an unsupported new script.
 3. Manual WSL2 Perform -> WAV -> reload -> replay and server restart persistence.
 4. Separate code-security/transport review and scientific-claim review.
+5. Provenance regression tests reject modified tracked Python source, newly
+   untracked Python source, a wrong commit, and edits after service startup.
+   Those tests are run via `npm run test:bridge`; passing them does not waive
+   the manual Windows/WSL2 UI check or separate reviewer signoff.
 
 Wolfram independently checked 0.5 * 48000 = 24000 samples and 10-ms frames
 corresponding to 480 samples. This is only timeline arithmetic, not physical
