@@ -280,11 +280,13 @@ export async function startServer() {
       }
       if (req.method !== 'POST' || req.url !== '/live/perform') return respond(res, 404, { error: 'Not found' });
       if (busy) return respond(res, 429, { error: 'Physical solver busy. Try again.' });
-      const input = await getBody(req);
-      if (!validate(input)) return respond(res, 400, { outcome: 'INVALID', issues: validate.errors });
-      const request = input;
+      // Claim the sole worker synchronously, BEFORE awaiting the request body.
+      // Otherwise two simultaneous body streams can both pass the busy check.
       busy = true;
       try {
+        const input = await getBody(req);
+        if (!validate(input)) return respond(res, 400, { outcome: 'INVALID', issues: validate.errors });
+        const request = input;
         const result = await performCoreBridge(request).catch((error) => failure(request, error instanceof Error ? error.message : String(error)));
         return respond(res, 200, result);
       } finally { busy = false; }
@@ -292,6 +294,9 @@ export async function startServer() {
       return respond(res, 400, { error: error instanceof Error ? error.message : String(error) });
     }
   });
+  // An incomplete JSON upload must not monopolize the single solver indefinitely.
+  server.requestTimeout = 15000;
+  server.headersTimeout = 10000;
   server.listen(PORT, '127.0.0.1', () => {
     console.log('Morphoacoustics X2a listening on http://127.0.0.1:' + PORT);
   });
