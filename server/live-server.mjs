@@ -1,10 +1,11 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { createServer } from 'node:http';
-import { spawn, spawnSync } from 'node:child_process';
-import { existsSync, promises as fs } from 'node:fs';
+import { spawn } from 'node:child_process';
+import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Ajv2020 from 'ajv/dist/2020.js';
+import { verifyCoreRevision } from './core-revision.mjs';
 
 const STUDIO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const CORE_SHA = 'a75418770ed28cbd301d554171a6b60ee5a05ee9';
@@ -124,6 +125,8 @@ async function runCore(mapped, runDir) {
   const requestFile = path.join(runDir, 'request.json');
   const outputDir = path.join(runDir, 'output');
   await fs.writeFile(requestFile, JSON.stringify(mapped), { flag: 'wx' });
+  // Recheck right before every physical subprocess, not only service startup.
+  verifyCoreRevision(CORE, CORE_SHA);
   return await new Promise((resolve, reject) => {
     const child = spawn(PYTHON, ['-m', 'morphoacoustics.integration.limited_live',
       '--request', requestFile, '--output-dir', outputDir], {
@@ -140,6 +143,9 @@ async function runCore(mapped, runDir) {
       try {
         const result = JSON.parse(stdout);
         if (code !== 0 || result.job_status === 'FAILED') throw new Error('Core failed: ' + (stderr || JSON.stringify(result.diagnostics)).slice(0, 1200));
+        // Reject a successful Take if Core files changed during execution.
+        // This is a fail-closed check, not an atomic filesystem sandbox.
+        verifyCoreRevision(CORE, CORE_SHA);
         resolve({ result, outputDir });
       } catch (error) {
         reject(error);
@@ -260,16 +266,9 @@ async function getBody(req) {
   return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks)));
 }
 
-function assertCore() {
-  const res = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: CORE, encoding: 'utf8', timeout: 10000 });
-  if (res.status !== 0 || res.stdout.trim() !== CORE_SHA) {
-    throw new Error('Core must be full checkout at audited commit ' + CORE_SHA + '; found ' + res.stdout.trim());
-  }
-}
-
 export async function startServer() {
   if (!Number.isInteger(PORT) || PORT < 1024 || PORT > 65535) throw new Error('Invalid MORPHO_LIVE_PORT.');
-  assertCore();
+  verifyCoreRevision(CORE, CORE_SHA);
   for (const folder of ['artifacts', 'runs', 'takes']) {
     await fs.mkdir(path.join(DATA, folder), { recursive: true });
   }
