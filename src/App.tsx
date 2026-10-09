@@ -6,6 +6,7 @@ import { resolveDynamicAssetRef } from './backend/dynamicAssets';
 import { FixedMorphoacousticsBackend } from './backend/FixedMorphoacousticsBackend';
 import { resolveFixedAudioRef } from './backend/fixedAudioAssets';
 import { MockBackend } from './backend/MockBackend';
+import { LiveExperimentalBackend } from './backend/LiveExperimentalBackend';
 import type { PerformanceBackend } from './backend/PerformanceBackend';
 import type { PerformanceRequestV0, PerformanceResultV0 } from './contract/types';
 import { performTake, type TakeRecord } from './performance/TakeStore';
@@ -20,7 +21,7 @@ import {
 
 const STORAGE_KEY = 'morphoacoustics-studio:s2-workspace:v1';
 
-type BackendMode = 'mock' | 'real-uniform' | 'real-constricted' | 'dynamic-wide';
+type BackendMode = 'mock' | 'real-uniform' | 'real-constricted' | 'dynamic-wide' | 'live-x2a';
 
 type Workspace = {
   draft: StudioDraft;
@@ -65,6 +66,7 @@ function loadWorkspace(): Workspace {
     const backendMode: BackendMode = parsed.backendMode === 'real-uniform'
       || parsed.backendMode === 'real-constricted'
       || parsed.backendMode === 'dynamic-wide'
+      || parsed.backendMode === 'live-x2a'
       ? parsed.backendMode
       : 'mock';
     return {
@@ -133,6 +135,7 @@ function backendFor(mode: BackendMode): PerformanceBackend {
   if (mode === 'real-uniform') return new FixedMorphoacousticsBackend('uniform');
   if (mode === 'real-constricted') return new FixedMorphoacousticsBackend('constricted');
   if (mode === 'dynamic-wide') return new DynamicMorphoacousticsBackend();
+  if (mode === 'live-x2a') return new LiveExperimentalBackend();
   return new MockBackend();
 }
 
@@ -140,10 +143,16 @@ function backendLabel(mode: BackendMode): string {
   if (mode === 'real-uniform') return 'REAL · M2 uniform';
   if (mode === 'real-constricted') return 'REAL · M2 constricted';
   if (mode === 'dynamic-wide') return 'REAL · M3 dynamic';
+  if (mode === 'live-x2a') return 'LIVE · X2a experimental';
   return 'MOCK BACKEND';
 }
 
 async function resolveAudioRef(ref: string): Promise<{ url: string; filename: string } | undefined> {
+  if (/^\/live\/artifacts\/[0-9a-f]{64}\.wav$/.test(ref)) {
+    const response = await fetch(ref, { cache: 'no-store' });
+    if (!response.ok) throw new Error('保存済みWAVがlocalhostサービスから取得できません（HTTP ' + response.status + '）。');
+    return { url: ref, filename: 'live-take-' + ref.slice(-16) };
+  }
   const fixed = await resolveFixedAudioRef(ref);
   if (fixed) return fixed;
   const dynamic = await resolveDynamicAssetRef(ref);
@@ -192,7 +201,9 @@ function TraceDownload({ artifact }: { artifact: ArtifactAsset }) {
     let cancelled = false;
     setResolved(null);
     setResolveError('');
-    resolveDynamicAssetRef(artifact.ref)
+    (artifact.ref.match(/^\/live\/artifacts\/[0-9a-f]{64}\.csv$/)
+      ? Promise.resolve({ url: artifact.ref, filename: 'live-physical-trace.csv' })
+      : resolveDynamicAssetRef(artifact.ref))
       .then((asset) => {
         if (cancelled) return;
         setResolved(asset ? { url: asset.url, filename: asset.filename } : null);
@@ -275,7 +286,8 @@ export default function App() {
   const useSupportedDemoScript = () => {
     setDraft((current) => ({
       ...current,
-      segments: [{ segmentId: 's1', text: 'あー', overrideNote: '' }],
+      segments: [{ segmentId: 's1', text: backendMode === 'live-x2a' ? 'あい' : 'あー', overrideNote: '' }],
+      ...(backendMode === 'live-x2a' ? { seed: 0, directionNote: '' } : {}),
     }));
   };
 
@@ -289,10 +301,19 @@ export default function App() {
     try {
       const capabilities = backendMode === 'mock'
         ? ['timeline', 'diagnostics']
-        : backendMode === 'dynamic-wide'
+        : backendMode === 'dynamic-wide' || backendMode === 'live-x2a'
           ? ['audio', 'timeline', 'diagnostics', 'gesture_trace', 'physical_trace']
           : ['audio', 'timeline', 'diagnostics'];
-      const request = buildPerformanceRequest(draft, serial, capabilities);
+      let request = buildPerformanceRequest(draft, serial, capabilities);
+      if (backendMode === 'live-x2a') {
+        // X2a has NO validated creative Direction mapping: omit it explicitly.
+        // The disabled controls remain in the authorial draft but never become physics.
+        request = { ...request, direction: {
+          schema_version: 'performance-contract/v0',
+          direction_id: draft.directionId, revision: draft.directionRevision,
+          controls: {}, segment_overrides: [],
+        } };
+      }
       const take = await performTake(backend, request);
       setTakes((current) => [...current, take]);
       setSerial((current) => current + 1);
@@ -331,7 +352,7 @@ export default function App() {
     <main className="studio-shell">
       <header className="studio-header">
         <div>
-          <p className="eyebrow">Morphoacoustics Studio · X1b</p>
+          <p className="eyebrow">Morphoacoustics Studio · X2a</p>
           <h1>{draft.characterName || 'Untitled Character'}</h1>
           <p className="description">Character → Script → Direction → Perform → Take → Compare</p>
         </div>
@@ -380,7 +401,7 @@ export default function App() {
               <div className="header-actions">
                 {backendMode !== 'mock' && (
                   <button className="secondary" type="button" onClick={useSupportedDemoScript}>
-                    {backendMode === 'dynamic-wide' ? 'X1b対応「あー」' : 'X1a対応「あー」'}
+                    {backendMode === 'live-x2a' ? 'X2a対応「あい」＋seed=0' : backendMode === 'dynamic-wide' ? 'X1b対応「あー」' : 'X1a対応「あー」'}
                   </button>
                 )}
                 <button className="secondary" type="button" onClick={addSegment}>区間を追加</button>
@@ -403,7 +424,7 @@ export default function App() {
                   </label>
                   <label>
                     この区間だけの演出メモ
-                    <input value={segment.overrideNote} placeholder="例：語尾で少し笑う" onChange={(event) => patchSegment(index, { overrideNote: event.target.value })} />
+                    <input value={segment.overrideNote} disabled={backendMode === 'live-x2a'} placeholder="例：語尾で少し笑う" onChange={(event) => patchSegment(index, { overrideNote: event.target.value })} />
                   </label>
                 </article>
               ))}
@@ -425,22 +446,25 @@ export default function App() {
             </div>
             <label>
               演出メモ
-              <textarea rows={3} value={draft.directionNote} onChange={(event) => patchDraft({ directionNote: event.target.value })} />
+              <textarea rows={3} disabled={backendMode === 'live-x2a'} value={draft.directionNote} onChange={(event) => patchDraft({ directionNote: event.target.value })} />
             </label>
             <div className="control-grid">
               <label>
                 Energy
-                <input type="number" min="0" max="1" step="0.05" value={draft.energy} onChange={(event) => patchDraft({ energy: Number(event.target.value) })} />
+                <input type="number" disabled={backendMode === 'live-x2a'} min="0" max="1" step="0.05" value={draft.energy} onChange={(event) => patchDraft({ energy: Number(event.target.value) })} />
               </label>
               <label>
                 Pace
-                <input type="number" min="0.1" max="2" step="0.05" value={draft.pace} onChange={(event) => patchDraft({ pace: Number(event.target.value) })} />
+                <input type="number" disabled={backendMode === 'live-x2a'} min="0.1" max="2" step="0.05" value={draft.pace} onChange={(event) => patchDraft({ pace: Number(event.target.value) })} />
               </label>
               <label>
                 Seed
                 <input type="number" step="1" value={draft.seed} onChange={(event) => patchDraft({ seed: Number(event.target.value) })} />
               </label>
             </div>
+            {backendMode === 'live-x2a' && (
+              <p> X2aではDirection（Energy・Pace・感情・メモ）は未対応です。UIでは無効化し、物理モデルへ送信しません。seed=0と単一区間「あい」のみを実行します。 </p>
+            )}
             {backendMode === 'dynamic-wide' && (
               <p>
                 X1bではpaceだけを物理実行へ写像します。検証済みなのは0.75→slow/90 msと1.25→fast/30 msの2点だけで、中間値は補間せずUNSUPPORTEDです。
@@ -453,7 +477,7 @@ export default function App() {
               <p className="step-label">04 · Perform</p>
               <h2 id="perform-heading">Takeを作る</h2>
               <p>
-                Mock、M2固定音声、M3動的音声を同じPerformanceResult / Take経路で扱います。X1b dynamicではpaceだけがversioned integration policyを介して検証済みGesture timecourseへ反映されます。
+                Mock、X1a固定音声、X1b保存済み動的音声、X2a新規物理計算を区別します。X2aは実験的 /a/→/i/-like のみで、日本語「あい」の自然な発音同定は未保証です。
               </p>
               <label>
                 Backend / integration fixture
@@ -462,6 +486,7 @@ export default function App() {
                   <option value="real-uniform">Real · Experiment 009 uniform body</option>
                   <option value="real-constricted">Real · Experiment 009 constricted body</option>
                   <option value="dynamic-wide">Real · Experiment 010 wide-body dynamic pace</option>
+                  <option value="live-x2a">Live Experimental · Core physical synthesis /a/→/i/-like</option>
                 </select>
               </label>
             </div>
@@ -529,7 +554,7 @@ export default function App() {
 
       <footer className="footer-note">
         Contract <code>{mioRequest.schema_version}</code> · upstream <code>{upstream.commit.slice(0, 12)}</code> ·
-        草稿とTake履歴はこのブラウザに保存されます。実音声/trace artifactはversioned refから再検証・復元し、物理solver固有の状態はStudio草稿へ保存しません。
+        草稿とTake履歴の索引はこのブラウザに保存されます。X2a生成WAV/traceはlocalhostサーバーのディスクにSHA-256アドレスで永続保存されます。
       </footer>
     </main>
   );
