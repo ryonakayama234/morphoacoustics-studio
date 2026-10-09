@@ -56,6 +56,7 @@ jobs:
           done
           test "$ready" = 1 || { cat live-server.log; exit 1; }
           node studio/server/live-smoke.mjs
+          node studio/server/live-dirty-core-smoke.mjs
           ls -lh generated-live-takes/artifacts
           test "$(find generated-live-takes/takes -type f | wc -l)" -eq 2
           kill "$SERVICE_PID"
