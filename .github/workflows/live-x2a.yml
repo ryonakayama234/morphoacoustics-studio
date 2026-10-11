@@ -13,7 +13,7 @@ on:
 jobs:
   fresh-physical-takes:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - name: Checkout Studio
         uses: actions/checkout@v4
@@ -70,6 +70,17 @@ jobs:
           done
           test "$ready" = 1 || { cat live-server-restarted.log; exit 1; }
           node studio/server/live-restart-smoke.mjs
+      - name: Install CI-only Chromium for actual Studio browser smoke
+        run: |
+          cd studio
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Browser Perform/play/reload/restart/recover with fresh audited physics
+        env:
+          MORPHO_CORE_DIR: ${{ github.workspace }}/core
+          MORPHO_LIVE_DATA_DIR: ${{ github.workspace }}/generated-browser-takes
+        run: |
+          node studio/server/live-browser-smoke.mjs
       - name: Upload trace and service diagnostics for review
         if: always()
         uses: actions/upload-artifact@v4
@@ -83,4 +94,10 @@ jobs:
             generated-live-takes/artifacts/*.csv
             generated-live-takes/artifacts/*.npy
             generated-live-takes/artifacts/*.json
+            generated-browser-takes/browser-smoke.png
+            generated-browser-takes/*.log
+            generated-browser-takes/takes/*.json
+            generated-browser-takes/artifacts/*.wav
+            generated-browser-takes/artifacts/*.csv
+            generated-browser-takes/artifacts/*.json
           if-no-files-found: warn
