@@ -82,7 +82,7 @@ try {
   const page = await context.newPage();
   const consoleErrors = [];
   page.on('pageerror', (error) => consoleErrors.push(error.message));
-  await page.goto('http://127.0.0.1:5173/', { waitUntil: 'networkidle' });
+  await page.goto('http://127.0.0.1:5173/', { waitUntil: 'domcontentloaded' });
   await page.getByLabel('Backend / integration fixture').selectOption('live-x2a');
   await page.getByRole('button', { name: /X2a対応.*seed=0/ }).click();
   await page.getByRole('button', { name: 'Perform', exact: true }).click();
@@ -112,7 +112,8 @@ try {
       return workspace.takes?.length === 1;
     } catch { return false; }
   });
-  await page.reload({ waitUntil: 'networkidle' });
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.locator('.take-card').first().waitFor({ state: 'visible', timeout: 15000 });
   assert.equal(await page.locator('.take-card').count(), 1);
   assert.equal(await page.locator('.take-card audio').first().getAttribute('src'), uri);
   assert.equal(await verifyWav(uri), expectedHash);
@@ -128,7 +129,7 @@ try {
     MORPHO_CORE_DIR: core, MORPHO_LIVE_PORT: '8765', MORPHO_LIVE_DATA_DIR: data,
   });
   await ready('http://127.0.0.1:8765/live/health', server);
-  await page.reload({ waitUntil: 'networkidle' });
+  await page.reload({ waitUntil: 'domcontentloaded' });
   assert.equal(await page.locator('.take-card').count(), 1);
   assert.equal(await page.locator('.take-card audio').first().getAttribute('src'), uri);
   assert.equal(await verifyWav(uri), expectedHash);
