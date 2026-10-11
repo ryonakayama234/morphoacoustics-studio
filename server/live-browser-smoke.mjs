@@ -34,7 +34,7 @@ function launch(name, relativeScript, extraEnv = {}) {
 }
 
 async function stop(child) {
-  if (!child || child.exitCode !== null) return;
+  if (!child || child.exitCode !== null || child.signalCode !== null || child.killed) return;
   await new Promise((resolve) => {
     child.once('close', resolve);
     child.kill('SIGTERM');
