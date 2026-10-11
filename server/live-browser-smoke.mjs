@@ -17,8 +17,8 @@ assert.ok(core, 'MORPHO_CORE_DIR must refer to audited Core checkout');
 const processes = [];
 const logs = {};
 
-function launch(name, relativeScript, extraEnv = {}) {
-  const child = spawn(process.execPath, [relativeScript], {
+function launch(name, relativeScript, extraEnv = {}, args = []) {
+  const child = spawn(process.execPath, [relativeScript, ...args], {
     cwd: studio, shell: false, stdio: ['ignore', 'pipe', 'pipe'],
     env: { ...process.env, ...extraEnv },
   });
@@ -48,7 +48,7 @@ async function ready(url, child) {
     try { if ((await fetch(url)).ok) return; } catch {}
     await new Promise((resolve) => setTimeout(resolve, 200));
   }
-  throw new Error('Service did not become ready at ' + url);
+  throw new Error('Service did not become ready at ' + url + '\n' + logs[child === server ? 'live-bridge' : 'vite']);
 }
 
 function hash(bytes) { return createHash('sha256').update(bytes).digest('hex'); }
@@ -72,7 +72,7 @@ try {
     MORPHO_CORE_DIR: core, MORPHO_LIVE_PORT: '8765', MORPHO_LIVE_DATA_DIR: data,
   });
   await ready('http://127.0.0.1:8765/live/health', server);
-  const vite = launch('vite', 'node_modules/vite/bin/vite.js', {});
+  const vite = launch('vite', 'node_modules/vite/bin/vite.js', {}, ['--host', '127.0.0.1', '--port', '5173', '--strictPort']);
   await ready('http://127.0.0.1:5173/', vite);
   browser = await chromium.launch({
     headless: true,
