@@ -78,6 +78,27 @@ Open the Vite URL (localhost port 5173 by default), choose Live Experimental,
 click the demo button for あい + seed=0, then Perform. Listen, download,
 reload and listen again. Do not label the generated sound natural Japanese.
 
+## Automated real-browser CI (Linux Chromium)
+
+The pull-request integration workflow now has an **additional** headless Chromium
+smoke after its frozen two-run Core/Node integration. The test
+`server/live-browser-smoke.mjs` starts its own audited Core-backed localhost
+service and Vite UI, performs the supported 「あい」 request via the actual
+React buttons, asserts browser-decodable 0.5-second WAV and content SHA-256,
+reloads the page, fetches the saved physical-trace CSV, restarts the Node
+service, reloads again and verifies the exact original WAV bytes. It also
+submits the unsupported 「ありがとう」 and asserts no second playback WAV;
+the first accepted Take is left intact. The workflow uploads a browser
+screenshot, server logs and persisted Takes as review evidence.
+
+CI installs Chromium/Playwright **ephemerally** with `npm install --no-save
+--no-package-lock playwright@1.55.0`; no application dependency or frozen Core
+code is introduced. Browser playback testing verifies decoding and timeline
+progression, not actual sound through a Windows headphone. This automated
+Ubuntu browser gate is **not a substitute** for the still-required manual
+Windows/WSL2 localhost browser smoke, human listening, independent security
+review, or scientific claim review. A CI failure leaves PR #15 Draft.
+
 ## Gates before completing Issue #11
 
 1. Studio npm test / npm run test:bridge / npm run build pass.
@@ -86,7 +107,7 @@ reload and listen again. Do not label the generated sound natural Japanese.
    calls per run, 24,000 WAV samples, immutable unique Take IDs,
    SHA-matching audio/trace, raw-pressure quantized scientific signature,
    and no-fallback for an unsupported new script.
-3. Manual WSL2 Perform -> WAV -> reload -> replay and server restart persistence.
+3. Automated Ubuntu Chromium end-to-end browser smoke plus manual WSL2 Perform -> WAV -> reload -> replay and server restart persistence.
 4. Separate code-security/transport review and scientific-claim review.
 5. Provenance regression tests reject modified tracked Python source, newly
    untracked Python source, a wrong commit, and edits after service startup.
