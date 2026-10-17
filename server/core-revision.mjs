@@ -35,5 +35,16 @@ export function verifyCoreRevision(coreDir, expectedCommit) {
     throw new Error('Audited Core checkout has modified or untracked files; ' +
       'refusing physical execution. First changes: ' + changes.split('\n').slice(0, 4).join('; ').slice(0, 350));
   }
+  // Git status trusts assume-unchanged/skip-worktree index flags, potentially
+  // hiding edited Python files while reporting an apparently clean checkout.
+  // Refuse those (and other non-ordinary) index entries rather than claiming
+  // that the executed solver matches the audited Git tree.
+  const indexEntries = git(['ls-files', '-v', '-z']).split('\0').filter(Boolean);
+  const unsafe = indexEntries.filter((entry) => entry[0] !== 'H');
+  if (unsafe.length) {
+    throw new Error('Audited Core checkout has nonstandard Git index flags ' +
+      '(e.g. assume-unchanged or skip-worktree); refusing physical execution. First entries: ' +
+      unsafe.slice(0, 4).join('; ').slice(0, 350));
+  }
   return head;
 }
