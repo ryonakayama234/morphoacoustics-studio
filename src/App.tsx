@@ -9,7 +9,7 @@ import { MockBackend } from './backend/MockBackend';
 import { LiveExperimentalBackend } from './backend/LiveExperimentalBackend';
 import type { PerformanceBackend } from './backend/PerformanceBackend';
 import type { PerformanceRequestV0, PerformanceResultV0 } from './contract/types';
-import { performTake, type TakeRecord } from './performance/TakeStore';
+import { BackendExecutionError, performTake, type TakeRecord } from './performance/TakeStore';
 import {
   buildPerformanceRequest,
   directionSummary,
@@ -320,7 +320,11 @@ export default function App() {
       if (!compareA) setCompareA(take.result.take_id);
       else if (!compareB && compareA !== take.result.take_id) setCompareB(take.result.take_id);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : String(cause));
+      // Preserve the actionable localhost/HTTP failure reason for creators.
+      // TakeStore deliberately wraps backend exceptions in BackendExecutionError.
+      const detail = cause instanceof BackendExecutionError && cause.cause instanceof Error
+        ? cause.cause : cause;
+      setError(detail instanceof Error ? detail.message : String(detail));
     } finally {
       setBusy(false);
     }
