@@ -145,7 +145,20 @@ try {
   await page.screenshot({ path: path.join(data, 'browser-smoke.png'), fullPage: true });
   const saved = (await fs.readdir(path.join(data, 'takes'))).filter((name) => name.endsWith('.json'));
   assert.equal(saved.length, 1, 'Only the successful physical run is stored server-side');
-  console.log('PASS: Chromium Perform→decoded WAV→reload→trace→localhost restart→same SHA; unsupported script no fallback');
+
+  // An unavailable localhost service must display a useful error to the
+  // creator without falsely adding a second successful physical Take.
+  const takeCountBeforeOutage = await page.locator('.take-card').count();
+  await stop(server);
+  await page.getByRole('button', { name: 'Perform', exact: true }).click();
+  const alert = page.getByRole('alert');
+  await alert.waitFor({ state: 'visible', timeout: 15000 });
+  assert.match((await alert.textContent()) || '', /Live X2a/,
+    'Creator should see the actionable backend failure, not only a generic wrapper');
+  assert.equal(await page.locator('.take-card').count(), takeCountBeforeOutage,
+    'Lost backend must not fabricate or destroy an existing Take');
+  assert.equal((await fs.readdir(path.join(data, 'takes'))).filter((name) => name.endsWith('.json')).length, 1);
+  console.log('PASS: Chromium Perform→decoded WAV→reload→trace→localhost restart→same SHA; unsupported and service-outage cases no fallback');
 } finally {
   await browser?.close().catch(() => {});
   for (const child of [...processes].reverse()) await stop(child);
