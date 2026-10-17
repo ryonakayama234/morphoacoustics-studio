@@ -193,3 +193,44 @@ Code/design changes, if actually required, must update the relevant
 architecture/data/execution notes in the same PR. An unchanged successful
 CI report is historical execution evidence, not proof of a current Windows
 manual test. **Decision at this checkpoint: HOLD DRAFT; no merge or issue close.**
+
+## 2026-10-17 implementation continuation: index-flag provenance and outage UX
+
+A local falsification test demonstrated that `git status --porcelain` can report
+a clean tree after a tracked Python solver file is modified while Git's
+`assume-unchanged` or `skip-worktree` index flag is set. The original
+Core HEAD-and-status check would therefore accept a falsely clean solver.
+The updated `verifyCoreRevision` rejects nonordinary tracked index
+entries (`git ls-files -v -z`) as well as dirty or untracked files.
+This is a stricter reproducibility policy: sparse/skip-worktree Core
+checkouts must be normalized before use. It still does not provide
+atomic isolation against a malicious concurrent filesystem writer.
+
+Two Node policy regressions recreate the original false-clean behavior
+and verify rejection. The browser smoke now also stops the local service
+after the accepted Take/reload/restart and unsupported-input tests,
+checks that a new Perform shows a meaningful `Live X2a` failure,
+and ensures that neither a new false Take nor loss of the prior Take
+occurs. Studio unwraps the existing `BackendExecutionError` for
+actionable creator-facing transport diagnostics; its contract and
+failure semantics are unchanged.
+
+### Updated data/decision flow
+
+```mermaid
+flowchart LR
+    C["Studio creator: frozen あい, seed 0"] --> V["Contract v0 validation"]
+    V --> P["localhost live service / single-flight"]
+    P --> G{"Pinned Core HEAD + clean Git status + ordinary index flags?"}
+    G -->|No| E["FAILED — show reason; preserve earlier Takes"]
+    G -->|Yes| M["Audited Core body + motor + acoustics"]
+    M --> A["Validate result.json, numerical oracle and SHA artifacts"]
+    A --> T["Immutable disk WAV/trace/manifest Take"]
+    T --> U["Studio playback / compare / reload / download"]
+    P -->|Service unavailable| E
+```
+
+Review gate remains **open**: update the exact-head CI evidence after
+this change; independent code-security and scientific signoff and
+manual Windows/WSL2 playback remain required. No change to Core physics,
+the one-body experimental claim, or acceptance of additional Direction.
