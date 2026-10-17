@@ -58,3 +58,21 @@ test('a change after startup is rejected by the subsequent pre-run check', (t) =
   f.git('restore', '.');
   assert.equal(verifyCoreRevision(f.dir, f.head), f.head);
 });
+
+test('rejects Git assume-unchanged hiding locally modified solver code', (t) => {
+  const f = fixture(t);
+  f.git('update-index', '--assume-unchanged', 'src/morphoacoustics/solver.py');
+  appendFileSync(f.modulePath, 'A = 4\n');
+  assert.equal(f.git('status', '--porcelain=v1', '--untracked-files=all'), '',
+    'Git status must demonstrate the original false-clean failure mode');
+  assert.throws(() => verifyCoreRevision(f.dir, f.head), /nonstandard Git index flags/);
+});
+
+test('rejects Git skip-worktree hiding locally modified solver code', (t) => {
+  const f = fixture(t);
+  f.git('update-index', '--skip-worktree', 'src/morphoacoustics/solver.py');
+  appendFileSync(f.modulePath, 'A = 5\n');
+  assert.equal(f.git('status', '--porcelain=v1', '--untracked-files=all'), '',
+    'Git status must demonstrate the original false-clean failure mode');
+  assert.throws(() => verifyCoreRevision(f.dir, f.head), /nonstandard Git index flags/);
+});
