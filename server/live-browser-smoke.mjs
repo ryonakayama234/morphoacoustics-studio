@@ -88,6 +88,22 @@ try {
   await page.getByRole('button', { name: 'Perform', exact: true }).click();
   await page.locator('.take-card').waitFor({ state: 'visible', timeout: 200000 });
   assert.equal(await page.locator('.take-card').count(), 1);
+  // A/B are two comparison slots, not playback toggles. One Take cannot
+  // occupy both; clicking the assigned button again must clear that slot.
+  const takeCard = page.locator('.take-card').first();
+  const slotA = takeCard.getByRole('button', { name: 'A', exact: true });
+  const slotB = takeCard.getByRole('button', { name: 'B', exact: true });
+  assert.equal(await slotA.getAttribute('aria-pressed'), 'true');
+  assert.equal(await slotB.getAttribute('aria-pressed'), 'false');
+  await slotB.click();
+  assert.equal(await slotA.getAttribute('aria-pressed'), 'false', 'B must clear A on same Take');
+  assert.equal(await slotB.getAttribute('aria-pressed'), 'true');
+  assert.ok((await page.locator('.comparison-panel').innerText()).includes('Take A を選択してください。'));
+  await slotB.click();
+  assert.equal(await slotB.getAttribute('aria-pressed'), 'false', 're-clicking B clears it');
+  await slotA.click();
+  assert.equal(await slotA.getAttribute('aria-pressed'), 'true');
+  assert.equal(await slotB.getAttribute('aria-pressed'), 'false');
   const audio = page.locator('.take-card audio').first();
   await audio.waitFor({ state: 'attached' });
   const uri = await audio.getAttribute('src');
