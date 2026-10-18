@@ -234,3 +234,37 @@ Review gate remains **open**: update the exact-head CI evidence after
 this change; independent code-security and scientific signoff and
 manual Windows/WSL2 playback remain required. No change to Core physics,
 the one-body experimental claim, or acceptance of additional Direction.
+
+## 2026-10-18 Windows/WSL2 user acceptance — first physical Take and A/B correction
+
+The user successfully completed Windows/WSL2 Ubuntu setup with clean frozen Core
+`a75418770ed28cbd301d554171a6b60ee5a05ee9`, NumPy 2.4.6, and an exact
+Studio X2a checkout at `cf4457f1fa477eac899738b94428aa2a95451072`.
+The localhost Node bridge and Vite UI launched; user screenshots show Windows
+browser access, the one-segment `あい`/seed=0 fixture, **one newly generated
+`SUCCEEDED / FEASIBLE` Live X2a Take**, and an audio control and WAV download
+link. The user also reports that generating, deleting, and generating another
+Take succeeded. This is user-supplied functional evidence; **actual human
+listening, downloaded WAV hash, reload/replay and server restart/replay are
+not yet recorded** and must not be inferred from screenshots. The locally
+running checkout remains at that older Studio SHA until deliberately updated.
+
+The user identified a comparison UX defect: for a single Take, clicking B
+after A highlighted both, and repeated clicks seemed inert. The original
+independent `compareA`/`compareB` state allowed the same Take ID in both
+slots. A/B are **different Take comparison slots**, not player playback
+controls or validated different vocal performances.
+
+The correction on this same Draft PR gives the A/B selection a single
+exclusive state object: assigning a Take to the other slot moves it, clicking
+an assigned slot again clears it, a second distinct Take may be compared,
+and deletion vacates only that Take's slot. Accessible `aria-pressed`
+identifies the selected button. The comparison panel explains that different
+Takes are required. New Vitest policy tests and the actual Chromium
+physical-Take browser smoke cover the regression. No physical Core model,
+source, frozen mapping, contract, artifact, or saved WAV changes were made.
+
+**Gate separation:** UI bug fix and automated checks do not substitute for
+actual Windows audio playback, hash/reload/restart evidence, independent
+code-security review, or independent scientific/contract review. Keep PR
+Draft and Issue #11 open; do not merge until the existing gates pass.
