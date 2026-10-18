@@ -9,6 +9,7 @@ import { MockBackend } from './backend/MockBackend';
 import { LiveExperimentalBackend } from './backend/LiveExperimentalBackend';
 import type { PerformanceBackend } from './backend/PerformanceBackend';
 import type { PerformanceRequestV0, PerformanceResultV0 } from './contract/types';
+import { addComparisonTake, removeComparisonTake, selectComparisonTake, type ComparisonSelection } from './studio/compareSelection';
 import { BackendExecutionError, performTake, type TakeRecord } from './performance/TakeStore';
 import {
   buildPerformanceRequest,
@@ -229,8 +230,10 @@ export default function App() {
   const [backendMode, setBackendMode] = useState<BackendMode>(initial.backendMode);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [compareA, setCompareA] = useState<string | null>(initial.takes[0]?.result.take_id ?? null);
-  const [compareB, setCompareB] = useState<string | null>(initial.takes[1]?.result.take_id ?? null);
+  const [comparison, setComparison] = useState<ComparisonSelection>({
+    a: initial.takes[0]?.result.take_id ?? null,
+    b: initial.takes[1]?.result.take_id ?? null,
+  });
   const backend = useMemo(() => backendFor(backendMode), [backendMode]);
 
   useEffect(() => {
@@ -317,8 +320,7 @@ export default function App() {
       const take = await performTake(backend, request);
       setTakes((current) => [...current, take]);
       setSerial((current) => current + 1);
-      if (!compareA) setCompareA(take.result.take_id);
-      else if (!compareB && compareA !== take.result.take_id) setCompareB(take.result.take_id);
+      setComparison((current) => addComparisonTake(current, take.result.take_id));
     } catch (cause) {
       // Preserve the actionable localhost/HTTP failure reason for creators.
       // TakeStore deliberately wraps backend exceptions in BackendExecutionError.
@@ -333,8 +335,7 @@ export default function App() {
   const deleteTake = (takeId: string) => {
     if (!window.confirm('このTakeを履歴から削除しますか？')) return;
     setTakes((current) => current.filter((take) => take.result.take_id !== takeId));
-    if (compareA === takeId) setCompareA(null);
-    if (compareB === takeId) setCompareB(null);
+    setComparison((current) => removeComparisonTake(current, takeId));
   };
 
   const resetDemo = () => {
@@ -344,13 +345,12 @@ export default function App() {
     setTakes([]);
     setSerial(1);
     setBackendMode('mock');
-    setCompareA(null);
-    setCompareB(null);
+    setComparison({ a: null, b: null });
     setError('');
   };
 
-  const selectedA = takes.find((take) => take.result.take_id === compareA);
-  const selectedB = takes.find((take) => take.result.take_id === compareB);
+  const selectedA = takes.find((take) => take.result.take_id === comparison.a);
+  const selectedB = takes.find((take) => take.result.take_id === comparison.b);
 
   return (
     <main className="studio-shell">
@@ -530,8 +530,8 @@ export default function App() {
                     </dl>
                     {audio && <AudioPlayer artifact={audio} />}
                     <div className="take-actions">
-                      <button type="button" className={compareA === take.result.take_id ? 'selected' : ''} onClick={() => setCompareA(take.result.take_id)}>A</button>
-                      <button type="button" className={compareB === take.result.take_id ? 'selected' : ''} onClick={() => setCompareB(take.result.take_id)}>B</button>
+                      <button type="button" aria-pressed={comparison.a === take.result.take_id} className={comparison.a === take.result.take_id ? 'selected' : ''} onClick={() => setComparison((current) => selectComparisonTake(current, 'a', take.result.take_id))}>A</button>
+                      <button type="button" aria-pressed={comparison.b === take.result.take_id} className={comparison.b === take.result.take_id ? 'selected' : ''} onClick={() => setComparison((current) => selectComparisonTake(current, 'b', take.result.take_id))}>B</button>
                       <button type="button" className="danger-text" onClick={() => deleteTake(take.result.take_id)}>削除</button>
                     </div>
                   </article>
@@ -550,6 +550,7 @@ export default function App() {
           </div>
           <span>入力・音声・timeline・trace・結果・provenanceを別々に確認</span>
         </div>
+        <p>A/Bは再生切替ではなく、異なる2件のTakeを並べて比較する枠です。同じTakeを両方には選べません。選択中のボタンをもう一度押すと解除できます。</p>
         <div className="comparison-grid">
           <TakeComparison label="A" take={selectedA} />
           <TakeComparison label="B" take={selectedB} />
