@@ -6,6 +6,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Ajv2020 from 'ajv/dist/2020.js';
 import { verifyCoreRevision } from './core-revision.mjs';
+import { assertAuditedRawPressureBytes, X2A_PRESSURE_QUANTUM_PA,
+  X2A_RAW_PRESSURE_SHA256 } from './raw-pressure-oracle.mjs';
 
 const STUDIO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const CORE_SHA = 'a75418770ed28cbd301d554171a6b60ee5a05ee9';
@@ -14,8 +16,8 @@ export const VERSION = 'x2a-bridge-v1+' + CORE_SHA.slice(0, 12);
 // Pinned Experiment 029 numerical baseline, not the playback PCM/WAV digest.
 // A local Core result must not become a successful creator Take if this gate drifts.
 export const AUDITED_RAW_PRESSURE_ORACLE = Object.freeze({
-  quantization_pa: 1e-9,
-  quantized_sha256: 'dc14c78bcc6d4a19c11fe2a01ba84b1394802b66626f4dfa27cc582c741e714e',
+  quantization_pa: X2A_PRESSURE_QUANTUM_PA,
+  quantized_sha256: X2A_RAW_PRESSURE_SHA256,
 });
 const FILENAMES = Object.freeze({
   audio: ['audio.wav', '.wav', 'audio/wav'],
@@ -237,6 +239,9 @@ export async function performCoreBridge(request) {
     const diskManifest = JSON.parse(await fs.readFile(path.join(outputDir, 'result.json'), 'utf8'));
     if (digest(diskManifest) !== digest(core)) throw new Error('Core result differs from completion manifest.');
     assertAuditedLiveCoreResult(core, map.mapped);
+    // Recompute the numerical oracle in Node from the actual raw NPY bytes,
+    // independently of Core's self-reported manifest signature.
+    assertAuditedRawPressureBytes(await fs.readFile(path.join(outputDir, 'raw_pressure_pa.npy')));
   } else if (Array.isArray(core.artifacts) && core.artifacts.length) {
     throw new Error('Core returned audio for a non-feasible outcome.');
   }
