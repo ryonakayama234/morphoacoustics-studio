@@ -1,0 +1,184 @@
+/** Chromium end-to-end check of the actual X2a creator experience.
+ * Linux CI evidence only; not a substitute for manual Windows/WSL2 smoke.
+ * Installs Playwright only in the ephemeral CI job (no production dependency).
+ */
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { spawn } from 'node:child_process';
+import { promises as fs } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { chromium } from 'playwright';
+
+const studio = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const data = path.resolve(process.env.MORPHO_LIVE_DATA_DIR || path.join(studio, '.morpho-browser-data'));
+const core = process.env.MORPHO_CORE_DIR;
+assert.ok(core, 'MORPHO_CORE_DIR must refer to audited Core checkout');
+const processes = [];
+const logs = {};
+
+function launch(name, relativeScript, extraEnv = {}, args = []) {
+  const child = spawn(process.execPath, [relativeScript, ...args], {
+    cwd: studio, shell: false, stdio: ['ignore', 'pipe', 'pipe'],
+    env: { ...process.env, ...extraEnv },
+  });
+  logs[name] = '';
+  for (const stream of [child.stdout, child.stderr]) {
+    stream.on('data', (bytes) => {
+      logs[name] += bytes.toString();
+      if (logs[name].length > 128000) logs[name] = logs[name].slice(-128000);
+    });
+  }
+  processes.push(child);
+  return child;
+}
+
+async function stop(child) {
+  if (!child || child.exitCode !== null || child.signalCode !== null || child.killed) return;
+  await new Promise((resolve) => {
+    child.once('close', resolve);
+    child.kill('SIGTERM');
+    setTimeout(() => { if (child.exitCode === null) child.kill('SIGKILL'); }, 3000).unref();
+  });
+}
+
+async function ready(url, child) {
+  for (let i = 0; i < 100; ++i) {
+    if (child.exitCode !== null) throw new Error('Local process exited: ' + child.exitCode);
+    try { if ((await fetch(url)).ok) return; } catch {}
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  }
+  throw new Error('Service did not become ready at ' + url + '\n' + logs[child === server ? 'live-bridge' : 'vite']);
+}
+
+function hash(bytes) { return createHash('sha256').update(bytes).digest('hex'); }
+async function verifyWav(uri) {
+  assert.match(uri, /^\/live\/artifacts\/[0-9a-f]{64}\.wav$/);
+  const response = await fetch('http://127.0.0.1:8765' + uri);
+  assert.equal(response.status, 200);
+  const bytes = Buffer.from(await response.arrayBuffer());
+  assert.equal(hash(bytes), path.basename(uri).slice(0, 64));
+  assert.equal(bytes.toString('ascii', 0, 4), 'RIFF');
+  assert.equal(bytes.readUInt32LE(24), 48000);
+  assert.equal(bytes.length, 44 + 24000 * 2);
+  return hash(bytes);
+}
+
+await fs.mkdir(data, { recursive: true });
+let browser;
+let server;
+try {
+  server = launch('live-bridge', 'server/live-server.mjs', {
+    MORPHO_CORE_DIR: core, MORPHO_LIVE_PORT: '8765', MORPHO_LIVE_DATA_DIR: data,
+  });
+  await ready('http://127.0.0.1:8765/live/health', server);
+  const vite = launch('vite', 'node_modules/vite/bin/vite.js', {}, ['--host', '127.0.0.1', '--port', '5173', '--strictPort']);
+  await ready('http://127.0.0.1:5173/', vite);
+  browser = await chromium.launch({
+    headless: true,
+    args: ['--no-sandbox', '--autoplay-policy=no-user-gesture-required'],
+  });
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const consoleErrors = [];
+  page.on('pageerror', (error) => consoleErrors.push(error.message));
+  await page.goto('http://127.0.0.1:5173/', { waitUntil: 'domcontentloaded' });
+  await page.getByLabel('Backend / integration fixture').selectOption('live-x2a');
+  await page.getByRole('button', { name: /X2a対応.*seed=0/ }).click();
+  await page.getByRole('button', { name: 'Perform', exact: true }).click();
+  await page.locator('.take-card').waitFor({ state: 'visible', timeout: 200000 });
+  assert.equal(await page.locator('.take-card').count(), 1);
+  // A/B are two comparison slots, not playback toggles. One Take cannot
+  // occupy both; clicking the assigned button again must clear that slot.
+  const takeCard = page.locator('.take-card').first();
+  const slotA = takeCard.getByRole('button', { name: 'A', exact: true });
+  const slotB = takeCard.getByRole('button', { name: 'B', exact: true });
+  assert.equal(await slotA.getAttribute('aria-pressed'), 'true');
+  assert.equal(await slotB.getAttribute('aria-pressed'), 'false');
+  await slotB.click();
+  assert.equal(await slotA.getAttribute('aria-pressed'), 'false', 'B must clear A on same Take');
+  assert.equal(await slotB.getAttribute('aria-pressed'), 'true');
+  assert.ok((await page.locator('.comparison-panel').innerText()).includes('Take A を選択してください。'));
+  await slotB.click();
+  assert.equal(await slotB.getAttribute('aria-pressed'), 'false', 're-clicking B clears it');
+  await slotA.click();
+  assert.equal(await slotA.getAttribute('aria-pressed'), 'true');
+  assert.equal(await slotB.getAttribute('aria-pressed'), 'false');
+  const audio = page.locator('.take-card audio').first();
+  await audio.waitFor({ state: 'attached' });
+  const uri = await audio.getAttribute('src');
+  assert.ok(uri);
+  const expectedHash = await verifyWav(uri);
+  // Test actual Chromium decoding and progression, not speaker/headphone audibility.
+  const playback = await audio.evaluate(async (element) => {
+    if (element.readyState < 1) await new Promise((resolve, reject) => {
+      element.addEventListener('loadedmetadata', resolve, { once: true });
+      element.addEventListener('error', reject, { once: true });
+      element.load();
+    });
+    await element.play();
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    return { duration: element.duration, currentTime: element.currentTime };
+  });
+  assert.ok(playback.duration >= 0.49 && playback.duration <= 0.51, JSON.stringify(playback));
+  assert.ok(playback.currentTime > 0, 'Chromium did not progress past time zero');
+  await page.waitForFunction(() => {
+    try {
+      const workspace = JSON.parse(window.localStorage.getItem('morphoacoustics-studio:s2-workspace:v1') || '{}');
+      return workspace.takes?.length === 1;
+    } catch { return false; }
+  });
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.locator('.take-card').first().waitFor({ state: 'visible', timeout: 15000 });
+  assert.equal(await page.locator('.take-card').count(), 1);
+  assert.equal(await page.locator('.take-card audio').first().getAttribute('src'), uri);
+  assert.equal(await verifyWav(uri), expectedHash);
+  const csv = page.locator('.comparison-panel a[href$=".csv"]').first();
+  await csv.waitFor({ state: 'attached' });
+  const csvUri = await csv.getAttribute('href');
+  assert.match(csvUri, /^\/live\/artifacts\/[0-9a-f]{64}\.csv$/);
+  assert.equal((await fetch('http://127.0.0.1:8765' + csvUri)).status, 200);
+
+  // Simulate exactly the localhost service restart while keeping Chromium's browser index.
+  await stop(server);
+  server = launch('live-bridge-restarted', 'server/live-server.mjs', {
+    MORPHO_CORE_DIR: core, MORPHO_LIVE_PORT: '8765', MORPHO_LIVE_DATA_DIR: data,
+  });
+  await ready('http://127.0.0.1:8765/live/health', server);
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  assert.equal(await page.locator('.take-card').count(), 1);
+  assert.equal(await page.locator('.take-card audio').first().getAttribute('src'), uri);
+  assert.equal(await verifyWav(uri), expectedHash);
+
+  // A new unsupported Script must not manufacture a plausible WAV or erase the prior one.
+  await page.getByLabel('台詞').fill('ありがとう');
+  await page.getByRole('button', { name: 'Perform', exact: true }).click();
+  await page.waitForFunction(() => document.querySelectorAll('.take-card').length === 2);
+  assert.equal(await page.locator('.take-card').first().locator('audio').count(), 0);
+  assert.equal(await page.locator('.take-card').last().locator('audio').count(), 1);
+  assert.equal(await verifyWav(uri), expectedHash);
+  assert.deepEqual(consoleErrors, []);
+  await page.screenshot({ path: path.join(data, 'browser-smoke.png'), fullPage: true });
+  const saved = (await fs.readdir(path.join(data, 'takes'))).filter((name) => name.endsWith('.json'));
+  assert.equal(saved.length, 1, 'Only the successful physical run is stored server-side');
+
+  // An unavailable localhost service must display a useful error to the
+  // creator without falsely adding a second successful physical Take.
+  const takeCountBeforeOutage = await page.locator('.take-card').count();
+  await stop(server);
+  await page.getByRole('button', { name: 'Perform', exact: true }).click();
+  const alert = page.getByRole('alert');
+  await alert.waitFor({ state: 'visible', timeout: 15000 });
+  assert.match((await alert.textContent()) || '', /Live X2a/,
+    'Creator should see the actionable backend failure, not only a generic wrapper');
+  assert.equal(await page.locator('.take-card').count(), takeCountBeforeOutage,
+    'Lost backend must not fabricate or destroy an existing Take');
+  assert.equal((await fs.readdir(path.join(data, 'takes'))).filter((name) => name.endsWith('.json')).length, 1);
+  console.log('PASS: Chromium Perform→decoded WAV→reload→trace→localhost restart→same SHA; unsupported and service-outage cases no fallback');
+} finally {
+  await browser?.close().catch(() => {});
+  for (const child of [...processes].reverse()) await stop(child);
+  for (const [name, output] of Object.entries(logs)) {
+    await fs.writeFile(path.join(data, name + '.log'), output);
+  }
+}
