@@ -124,3 +124,15 @@ test('rejects top-level ignored Python startup module but allows ordinary cached
   assert.equal(verifyCoreRevision(f.dir, head), head,
     'Per-run PYTHONPYCACHEPREFIX prevents loading old ignored source caches');
 });
+
+test('rejects ignored sourceless top-level Python bytecode', (t) => {
+  const f = fixture(t);
+  appendFileSync(path.join(f.dir, '.gitignore'), 'sitecustomize.pyc\n');
+  f.git('add', '.gitignore');
+  f.git('commit', '-qm', 'ignore sourceless code');
+  writeFileSync(path.join(f.dir, 'sitecustomize.pyc'), 'ignored executable bytecode');
+  const head = f.git('rev-parse', 'HEAD');
+  assert.equal(f.git('status', '--porcelain=v1', '--untracked-files=all'), '');
+  assert.throws(() => verifyCoreRevision(f.dir, head),
+    /ignored executable code.*sitecustomize\.pyc/);
+});
