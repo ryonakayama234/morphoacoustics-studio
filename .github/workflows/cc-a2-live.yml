@@ -1,0 +1,94 @@
+name: cc-a2-live-two-body
+
+on:
+  pull_request:
+    paths:
+      - "src/ccA2/**"
+      - "src/App.tsx"
+      - "server/cc-a2-*.mjs"
+      - "vite.config.ts"
+      - "package.json"
+      - "docs/cc-a2-*.md"
+      - ".github/workflows/cc-a2-live.yml"
+  push:
+    paths:
+      - "src/ccA2/**"
+      - "src/App.tsx"
+      - "server/cc-a2-*.mjs"
+      - "vite.config.ts"
+      - "package.json"
+      - "docs/cc-a2-*.md"
+      - ".github/workflows/cc-a2-live.yml"
+  workflow_dispatch:
+
+jobs:
+  creator-physical:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: ryonakayama234/morphoacoustics
+          ref: 588c52cac2774adbdb2e2fb802cbec04669833e2
+          path: core
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.16.0"
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install Studio and exact Core numerical dependencies
+        run: |
+          npm ci
+          python -m pip install "numpy==2.4.6"
+          python -m pip install -e 'core[dev]'
+          python -c "import numpy; assert numpy.__version__=='2.4.6'"
+      - name: Studio typecheck, unit and contract security tests
+        run: |
+          npm run build
+          npm test
+          node --test server/cc-a2-server.policy.mjs
+      - name: Execute fresh two-body physics and persist Takes
+        env:
+          MORPHO_CORE_DIR: ${{ github.workspace }}/core
+          MORPHO_PYTHON: python
+          MORPHO_CC_A2_DATA_DIR: ${{ runner.temp }}/cc-a2-data
+        run: |
+          set -e
+          npm run cc-a2:server > cc-a2-server.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" || true' EXIT
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8766/cc-a2/health; then break; fi
+            sleep 1
+          done
+          node server/cc-a2-smoke.mjs
+          kill "$SERVER_PID" || true
+          wait "$SERVER_PID" || true
+          npm run cc-a2:server > cc-a2-restart.log 2>&1 &
+          SERVER_PID=$!
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8766/cc-a2/health; then break; fi
+            sleep 1
+          done
+          node --input-type=module -e '
+            import assert from "node:assert/strict";
+            const r=await fetch("http://127.0.0.1:8766/cc-a2/takes");
+            assert.equal(r.status,200);
+            const takes=await r.json();
+            assert.ok(takes.some(t=>t.request.embodiment.preset_id==="v3b-axial-M0"));
+            assert.ok(takes.some(t=>t.request.embodiment.preset_id==="v3b-axial-M1"));
+            console.log("CC-A2 restart/reload persistence PASS");
+          '
+      - name: Archive E2E physical evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cc-a2-studio-evidence
+          path: |
+            cc-a2-smoke-summary.json
+            cc-a2-server.log
+            cc-a2-restart.log
+          if-no-files-found: warn
