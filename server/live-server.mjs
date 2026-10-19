@@ -11,6 +11,12 @@ const STUDIO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 export const CORE_SHA = 'a75418770ed28cbd301d554171a6b60ee5a05ee9';
 export const BACKEND = 'morphoacoustics-live-x2a-v0';
 export const VERSION = 'x2a-bridge-v1+' + CORE_SHA.slice(0, 12);
+// Pinned Experiment 029 numerical baseline, not the playback PCM/WAV digest.
+// A local Core result must not become a successful creator Take if this gate drifts.
+export const AUDITED_RAW_PRESSURE_ORACLE = Object.freeze({
+  quantization_pa: 1e-9,
+  quantized_sha256: 'dc14c78bcc6d4a19c11fe2a01ba84b1394802b66626f4dfa27cc582c741e714e',
+});
 const FILENAMES = Object.freeze({
   audio: ['audio.wav', '.wav', 'audio/wav'],
   raw_pressure: ['raw_pressure_pa.npy', '.npy', 'application/x-npy'],
@@ -192,6 +198,27 @@ async function saveManifest(coreResult, runId) {
   return { kind: 'live-manifest', ref: '/live/artifacts/' + hex + '.json', media_type: 'application/json' };
 }
 
+/** Validate Core's frozen scientific receipt before publishing any artifacts/Take.
+ * The upstream audited solver independently enforces this signature on raw
+ * pressure before writing its own completion manifest. This is a second
+ * fail-closed check at the Studio trust boundary, not independent physics proof.
+ */
+export function assertAuditedLiveCoreResult(core, mapped) {
+  const provenance = core?.provenance;
+  if (core?.job_status !== 'SUCCEEDED' || core?.realization_outcome !== 'FEASIBLE'
+    || core.schema_version !== 'morpho-live/v1' || core.segment_id !== mapped.segment_id
+    || core.execution?.acoustic_transfer_calls !== 102 || core.execution?.waveform_samples !== 24000
+    || core.execution?.sample_rate_hz !== 48000 || !Array.isArray(core.artifacts)
+    || core.artifacts.length !== 3 || new Set(core.artifacts.map((a) => a.kind)).size !== 3
+    || provenance?.body_id !== mapped.body_id || provenance?.pronunciation_id !== mapped.pronunciation_id
+    || provenance?.source_id !== 'lf_fixed' || provenance?.seed !== mapped.seed
+    || provenance?.numpy_version !== '2.4.6'
+    || provenance?.quantization_pa !== AUDITED_RAW_PRESSURE_ORACLE.quantization_pa
+    || provenance?.quantized_raw_pressure_sha256 !== AUDITED_RAW_PRESSURE_ORACLE.quantized_sha256) {
+    throw new Error('Core audited live manifest contract or raw-pressure oracle violated.');
+  }
+}
+
 export async function performCoreBridge(request) {
   const map = mapCreativeRequest(request);
   if (!map.mapped) return rejected(request, 'UNSUPPORTED', 'LIVE_INPUT_UNSUPPORTED', map.reason);
@@ -206,12 +233,7 @@ export async function performCoreBridge(request) {
   if (outcome === 'FEASIBLE') {
     const diskManifest = JSON.parse(await fs.readFile(path.join(outputDir, 'result.json'), 'utf8'));
     if (digest(diskManifest) !== digest(core)) throw new Error('Core result differs from completion manifest.');
-    if (core.schema_version !== 'morpho-live/v1' || core.segment_id !== map.mapped.segment_id
-      || core.execution?.acoustic_transfer_calls !== 102 || core.execution?.waveform_samples !== 24000
-      || core.execution?.sample_rate_hz !== 48000 || !Array.isArray(core.artifacts)
-      || core.artifacts.length !== 3 || new Set(core.artifacts.map((a) => a.kind)).size !== 3
-      || core.provenance?.body_id !== map.mapped.body_id || core.provenance?.seed !== 0
-      || core.provenance?.numpy_version !== '2.4.6') throw new Error('Core audited live manifest contract violated.');
+    assertAuditedLiveCoreResult(core, map.mapped);
   } else if (Array.isArray(core.artifacts) && core.artifacts.length) {
     throw new Error('Core returned audio for a non-feasible outcome.');
   }
