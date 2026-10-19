@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { CORE_SHA, mapCreativeRequest, makeSingleFlightGate } from './live-server.mjs';
+import { CORE_SHA, AUDITED_RAW_PRESSURE_ORACLE, assertAuditedLiveCoreResult, mapCreativeRequest, makeSingleFlightGate } from './live-server.mjs';
 
 const dir = path.dirname(fileURLToPath(import.meta.url));
 const example = JSON.parse(readFileSync(path.join(dir, '../vendor/performance-contract/v0/examples/request.json'), 'utf8'));
@@ -64,4 +64,42 @@ test('atomic single-flight gate rejects concurrent entrants while first body is 
   gate.release();
   assert.equal(gate.claim(), true, 'worker can accept another request after release');
   gate.release();
+});
+
+function auditedCoreReceipt() {
+  return {
+    schema_version: 'morpho-live/v1',
+    job_status: 'SUCCEEDED', realization_outcome: 'FEASIBLE',
+    segment_id: 's1',
+    execution: { acoustic_transfer_calls: 102, waveform_samples: 24000, sample_rate_hz: 48000 },
+    artifacts: [
+      { kind: 'audio' }, { kind: 'raw_pressure' }, { kind: 'physical_trace' },
+    ],
+    provenance: {
+      body_id: 'v3c-M_plus/v1', pronunciation_id: 'v3a-a-to-i-like/v1',
+      source_id: 'lf_fixed', seed: 0, numpy_version: '2.4.6',
+      quantization_pa: 1e-9,
+      quantized_raw_pressure_sha256: AUDITED_RAW_PRESSURE_ORACLE.quantized_sha256,
+    },
+  };
+}
+
+test('audited Core receipt must include the exact frozen raw-pressure oracle before Take persistence', () => {
+  const mapped = mapCreativeRequest(request()).mapped;
+  const good = auditedCoreReceipt();
+  assert.doesNotThrow(() => assertAuditedLiveCoreResult(good, mapped));
+  for (const mutate of [
+    (v) => { v.provenance.quantized_raw_pressure_sha256 = '0'.repeat(64); },
+    (v) => { delete v.provenance.quantized_raw_pressure_sha256; },
+    (v) => { v.provenance.quantization_pa = 1e-8; },
+    (v) => { v.provenance.source_id = 'other'; },
+    (v) => { v.provenance.body_id = 'other'; },
+    (v) => { v.provenance.pronunciation_id = 'other'; },
+    (v) => { v.execution.acoustic_transfer_calls = 101; },
+  ]) {
+    const candidate = structuredClone(good);
+    mutate(candidate);
+    assert.throws(() => assertAuditedLiveCoreResult(candidate, mapped),
+      /raw-pressure oracle violated/, 'Drift must fail before artifacts/Take are written');
+  }
 });
