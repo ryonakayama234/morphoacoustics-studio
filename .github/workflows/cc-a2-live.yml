@@ -65,6 +65,9 @@ jobs:
             if curl -fsS http://127.0.0.1:8766/cc-a2/health; then break; fi
             sleep 1
           done
+          if ! curl -fsS http://127.0.0.1:8766/cc-a2/health >/dev/null; then
+            echo "CC-A2 service failed to start"; cat cc-a2-server.log; exit 1
+          fi
           node server/cc-a2-smoke.mjs
           kill "$SERVER_PID" || true
           wait "$SERVER_PID" || true
