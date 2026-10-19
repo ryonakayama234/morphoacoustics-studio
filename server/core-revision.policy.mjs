@@ -99,7 +99,6 @@ test('rejects importable source hidden through .git/info/exclude', (t) => {
 
 test('rejects executable code hidden through global git excludesFile', (t) => {
   const f = fixture(t);
-  const exclude = path.join(f.dir, 'global-excludes.txt');
   // Git index sees the untracked global-excludes.txt unless it is kept outside the fixture.
   const outside = mkdtempSync(path.join(os.tmpdir(), 'morpho-excludes-'));
   t.after(() => rmSync(outside, { recursive: true, force: true }));
