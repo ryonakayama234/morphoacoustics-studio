@@ -58,7 +58,7 @@ jobs:
           MORPHO_CC_A2_DATA_DIR: ${{ runner.temp }}/cc-a2-data
         run: |
           set -e
-          npm run cc-a2:server > cc-a2-server.log 2>&1 &
+          node server/cc-a2-server.mjs > cc-a2-server.log 2>&1 &
           SERVER_PID=$!
           trap 'kill "$SERVER_PID" || true' EXIT
           for i in $(seq 1 60); do
@@ -68,7 +68,7 @@ jobs:
           node server/cc-a2-smoke.mjs
           kill "$SERVER_PID" || true
           wait "$SERVER_PID" || true
-          npm run cc-a2:server > cc-a2-restart.log 2>&1 &
+          node server/cc-a2-server.mjs > cc-a2-restart.log 2>&1 &
           SERVER_PID=$!
           for i in $(seq 1 60); do
             if curl -fsS http://127.0.0.1:8766/cc-a2/health; then break; fi
