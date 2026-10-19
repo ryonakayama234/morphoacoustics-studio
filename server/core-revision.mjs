@@ -42,7 +42,11 @@ export function verifyCoreRevision(coreDir, expectedCommit) {
   // Standard __pycache__ files are not executed because each child process
   // uses a new, empty PYTHONPYCACHEPREFIX outside the Core checkout.
   const ignored = git(['ls-files', '--others', '--ignored', '--exclude-standard', '-z',
-    '--', 'src', 'experiments']).split('\0').filter(Boolean);
+    '--', 'src', 'experiments',
+    // Top-level launch-time shims can also be imported from the Core cwd.
+    ':(top,glob)*.py', ':(top,glob)*.pyw', ':(top,glob)*.pth',
+    ':(top,glob)*.so', ':(top,glob)*.pyd', ':(top,glob)*.dll',
+    ':(top,glob)*.dylib']).split('\0').filter(Boolean);
   const forbidden = ignored.filter((name) =>
     /\.(py|pyw|pyc|pyo|pth|so|pyd|dll|dylib)$/i.test(name)
     && !/(^|\/)__pycache__\/[^/]+\.pyc$/i.test(name));
