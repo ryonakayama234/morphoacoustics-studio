@@ -53,7 +53,7 @@ The CC-A2 Core is an **unmerged** feature branch. Use a separate pinned checkout
 git clone https://github.com/ryonakayama234/morphoacoustics.git morphoacoustics-cc-a2
 cd morphoacoustics-cc-a2
 git fetch origin pull/122/head
-git checkout 588c52cac2774adbdb2e2fb802cbec04669833e2
+git checkout b569f044bfda309dff1a00cccf8365754e6b1355
 python3.11 -m venv .venv
 source .venv/bin/activate
 pip install 'numpy==2.4.6'
