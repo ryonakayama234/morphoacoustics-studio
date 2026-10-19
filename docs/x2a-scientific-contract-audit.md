@@ -87,3 +87,17 @@ scientific disclosure. If these fail, **HOLD**, do not pretend completion.
 After adoption, do not infer any support for new bodies, arbitrary scripted
 speech, force/contact mechanics, real time-domain airway FSI, or any perceptual
 phonetic Gate. Those require separately registered research.
+
+## Additional executable provenance note (security review)
+
+Git ignored-file status alone is not enough: files hidden in tracked
+`.gitignore`, local `.git/info/exclude`, and global `core.excludesFile`
+can run Python startup shims while revision HEAD appears unchanged. Studio's
+bridge rejects ignored importable Python/binary files in Core `src/`,
+`experiments/`, and root startup locations, including *legacy sourceless*
+root `.pyc`/`.pyo` modules. The physical subprocess uses a unique
+`PYTHONPYCACHEPREFIX` so it does not consult pre-existing ignored
+`__pycache__` source caches; CI regression fixtures cover these bypass
+forms. This is a reproducibility guard around a **trusted local Python
+dependency environment**, not a hostile-system sandbox. No arbitrary
+user-controlled Python or third-party dependencies are certified by it.
