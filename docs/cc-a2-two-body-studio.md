@@ -1,6 +1,6 @@
-# CC-A2 — 2身体を交換して聴く（Studio限定実験、正式採用前）
+# CC-A2 — 2身体を交換して聴く（Studio Stage A、GO_LIMITED採用済み）
 
-**Status: Draft PR candidate, NOT adopted.** Existing X2a is independently adopted and remains unchanged. This adds a separate Performance Contract **v1** UI/localhost bridge, not a universal anatomy editor.
+**Status: GO_LIMITED ADOPTED / MERGED on 2026-10-19.** [Studio PR #19](https://github.com/ryonakayama234/morphoacoustics-studio/pull/19) merge `5c787ff0a7e6ddd9826681d7dda6d081a5ce76e0`; [Core PR #122](https://github.com/ryonakayama234/morphoacoustics/pull/122) merge `2855aa75534be95c95133daf079c957823c82040`. Existing X2a remains unchanged; the separate Performance Contract **v1** localhost bridge is a bounded creative/research feature, not a universal anatomy editor. [Stage A acceptance Issue #14](https://github.com/ryonakayama234/morphoacoustics-studio/issues/14) is the canonical final gate receipt.
 
 Parents: [Studio #14](https://github.com/ryonakayama234/morphoacoustics-studio/issues/14), [Core CC-A2 PR #122](https://github.com/ryonakayama234/morphoacoustics/pull/122), adopted Contract v1 [Core PR #101](https://github.com/ryonakayama234/morphoacoustics/pull/101).
 
@@ -75,7 +75,7 @@ In a second WSL2 terminal, run `npm run dev` in the same Studio checkout, open t
 
 **Do not use the Core feature branch as a replacement for the old X2a pinned source checkout.** After core PR changes, update the Studio exact SHA, both CI pin and this runbook before claiming new-head compliance.
 
-## CI / review gates
+## CI / review gates (historical plan; final acceptance below)
 
 - Core's dedicated pinned Python test / frozen Experiment028 Wolfram and Experiment029 M0 quantized checks must PASS at exact Head.
 - Studio `npm run build`, `npm test`, CC-A2 Node policy and Core-backed real HTTP E2E CI must PASS on exact pinned Core SHA.
@@ -90,11 +90,11 @@ The 2 preset IDs represent only the adopted Experiment028 10% axial length contr
 
 ## 2026-10-19 critical code-review and remediation record
 
-The first Codex source review of Studio PR #19 on exact original HEAD `38928b5` found four issues, all newly corrected and covered by regression tests **pending exact repaired-HEAD CI / re-review**:
+The first Codex source review of Studio PR #19 on exact original HEAD `38928b5` found four issues, all corrected, regression-tested and **subsequently independently re-reviewed on final HEAD**:
 
 1. **P1** Hidden executable Python `tools/` imports were not scanned by adopted X2a's `verifyCoreRevision()`. The separate CC-A2 bridge now scans `git ls-files --others --ignored --exclude-standard -z -- tools` and refuses imported executable extensions, before service startup and each run. Does not change the adopted X2a code.
 2. **P1** `length_m` and endpoint P1/P2 values of type string/object/null could evade JS `Math.abs(...) > tolerance` because `NaN > threshold` is false. The bridge now explicitly requires `typeof value === 'number'` and `Number.isFinite` before comparison, with falsification cases.
 3. **P1** WAV RIFF gate checked length/rate/bit depth but not all chunk and format fields. New `assertAuditedWavBytes` requires exact mono linear PCM16, 48kHz, `RIFF/WAVE/fmt /data`, proper chunk lengths and byte/block rates, and a 24,000 frame payload; destructive header tests included.
 4. **P2** SIGTERM during Core solve could orphan a Python child. Bridge tracks its active process, closes listener and sends SIGTERM/short bounded SIGKILL escalation during shutdown; future execution-interrupt E2E evidence is a separate possible hardening test.
 
-**Required before release:** current Studio full CI, real Core-bridge and Chromium CI on precisely pinned repaired Core HEAD; new independent Codex disposition; creator's own Windows/WSL2 listening assessment; scoped adoption decision. Correctness of numerical pressure and audible human character identity remain different claims. Core + Studio remain **Draft and unmerged**.
+**Final gate disposition: GO_LIMITED on 2026-10-19.** Final Studio reviewed HEAD `2424b12a23edb2d6f245967952a213e1eaf56a1c` (includes [historical Take ordering correction](https://github.com/ryonakayama234/morphoacoustics-studio/commit/2424b12a23edb2d6f245967952a213e1eaf56a1c)); [independent Codex zero major finding review](https://github.com/ryonakayama234/morphoacoustics-studio/pull/19#issuecomment-6266680983). Five P1/P2 threads resolved after explicit patch+negative-control disposition; [real physics+Chromium A/B E2E](https://github.com/ryonakayama234/morphoacoustics-studio/actions/runs/39247730852), [standard TypeScript/Node](https://github.com/ryonakayama234/morphoacoustics-studio/actions/runs/39247730931), [legacy X2a regression](https://github.com/ryonakayama234/morphoacoustics-studio/actions/runs/39247730992) **all green on reviewed SHA**. **Postmerge main** `5c787ff0`: [standard CI](https://github.com/ryonakayama234/morphoacoustics-studio/actions/runs/39249942808) and [physical Core/Chromium A/B E2E](https://github.com/ryonakayama234/morphoacoustics-studio/actions/runs/39249942998) **BOTH SUCCESS**. Creator listened to two fresh physical WAVs and accepted perceived body B lower/darker than body A, with no claim of female voice or F0 difference. The user's listening of downloadable WAVs is NOT proof of an actual Windows/WSL2 Studio GUI run; CI ran on Ubuntu/Chromium. Standalone full security certification, general natural Japanese, real anatomical speaker identity, free-body editing and neural voice synthesis remain **outside this limited gate**. Earlier "before release" bullets above document the original gating policy, not an unfulfilled current adoption.
