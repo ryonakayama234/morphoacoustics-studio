@@ -1,3 +1,4 @@
+import { CCAtelier } from './ccA2/CCAtelier';
 import { useEffect, useMemo, useState } from 'react';
 import mioRequest from '../vendor/performance-contract/v0/examples/request.json';
 import upstream from '../vendor/performance-contract/UPSTREAM.json';
@@ -557,6 +558,7 @@ export default function App() {
         </div>
       </section>
 
+      <CCAtelier draft={draft} />
       <footer className="footer-note">
         Contract <code>{mioRequest.schema_version}</code> · upstream <code>{upstream.commit.slice(0, 12)}</code> ·
         草稿とTake履歴の索引はこのブラウザに保存されます。X2a生成WAV/traceはlocalhostサーバーのディスクにSHA-256アドレスで永続保存されます。
