@@ -76,3 +76,52 @@ test('rejects Git skip-worktree hiding locally modified solver code', (t) => {
     'Git status must demonstrate the original false-clean failure mode');
   assert.throws(() => verifyCoreRevision(f.dir, f.head), /nonstandard Git index flags/);
 });
+
+test('rejects Python startup shim ignored by tracked .gitignore', (t) => {
+  const f = fixture(t);
+  appendFileSync(path.join(f.dir, '.gitignore'), 'src/sitecustomize.py\n');
+  f.git('add', '.gitignore');
+  f.git('commit', '-qm', 'ignore startup shim');
+  writeFileSync(path.join(f.dir, 'src', 'sitecustomize.py'), 'raise RuntimeError("UNTRUSTED STARTUP")\n');
+  assert.equal(f.git('status', '--porcelain=v1', '--untracked-files=all'), '',
+    'Repro: git status considers the malicious importable file clean');
+  const head = f.git('rev-parse', 'HEAD');
+  assert.throws(() => verifyCoreRevision(f.dir, head), /ignored executable code.*src\/sitecustomize\.py/);
+});
+
+test('rejects importable source hidden through .git/info/exclude', (t) => {
+  const f = fixture(t);
+  appendFileSync(path.join(f.dir, '.git', 'info', 'exclude'), '\nsrc/hidden.py\n');
+  writeFileSync(path.join(f.dir, 'src', 'hidden.py'), 'raise RuntimeError("EXCLUDE")\n');
+  assert.equal(f.git('status', '--porcelain=v1', '--untracked-files=all'), '');
+  assert.throws(() => verifyCoreRevision(f.dir, f.head), /ignored executable code.*src\/hidden\.py/);
+});
+
+test('rejects executable code hidden through global git excludesFile', (t) => {
+  const f = fixture(t);
+  const exclude = path.join(f.dir, 'global-excludes.txt');
+  // Git index sees the untracked global-excludes.txt unless it is kept outside the fixture.
+  const outside = mkdtempSync(path.join(os.tmpdir(), 'morpho-excludes-'));
+  t.after(() => rmSync(outside, { recursive: true, force: true }));
+  const excludesFile = path.join(outside, 'rules');
+  writeFileSync(excludesFile, 'src/global_hidden.py\n');
+  f.git('config', 'core.excludesFile', excludesFile);
+  writeFileSync(path.join(f.dir, 'src', 'global_hidden.py'), 'raise RuntimeError("GLOBAL")\n');
+  assert.equal(f.git('status', '--porcelain=v1', '--untracked-files=all'), '');
+  assert.throws(() => verifyCoreRevision(f.dir, f.head), /ignored executable code.*src\/global_hidden\.py/);
+});
+
+test('rejects top-level ignored Python startup module but allows ordinary cached bytecode', (t) => {
+  const f = fixture(t);
+  appendFileSync(path.join(f.dir, '.gitignore'), 'sitecustomize.py\n');
+  f.git('add', '.gitignore');
+  f.git('commit', '-qm', 'ignore root module');
+  writeFileSync(path.join(f.dir, 'sitecustomize.py'), 'raise RuntimeError("ROOT")\n');
+  const head = f.git('rev-parse', 'HEAD');
+  assert.throws(() => verifyCoreRevision(f.dir, head), /ignored executable code.*sitecustomize\.py/);
+  unlinkSync(path.join(f.dir, 'sitecustomize.py'));
+  mkdirSync(path.join(f.dir, 'src', 'morphoacoustics', '__pycache__'));
+  writeFileSync(path.join(f.dir, 'src', 'morphoacoustics', '__pycache__', 'solver.cpython-311.pyc'), 'cached bytes');
+  assert.equal(verifyCoreRevision(f.dir, head), head,
+    'Per-run PYTHONPYCACHEPREFIX prevents loading old ignored source caches');
+});
