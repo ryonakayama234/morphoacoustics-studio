@@ -87,3 +87,14 @@ In a second WSL2 terminal, run `npm run dev` in the same Studio checkout, open t
 ## Known limits
 
 The 2 preset IDs represent only the adopted Experiment028 10% axial length contrast with a shared Experiment029 permissive articulator wrapper; their combined PreparedMorphology binding is newly authored and independently auditable. Unsupported Direction, gestures, seed and text are rejected by Core. Current v1 panel is intentionally separate from the existing v0 TakeStore to prevent silent schema migration and reinterpretation of older artifacts.
+
+## 2026-10-19 critical code-review and remediation record
+
+The first Codex source review of Studio PR #19 on exact original HEAD `38928b5` found four issues, all newly corrected and covered by regression tests **pending exact repaired-HEAD CI / re-review**:
+
+1. **P1** Hidden executable Python `tools/` imports were not scanned by adopted X2a's `verifyCoreRevision()`. The separate CC-A2 bridge now scans `git ls-files --others --ignored --exclude-standard -z -- tools` and refuses imported executable extensions, before service startup and each run. Does not change the adopted X2a code.
+2. **P1** `length_m` and endpoint P1/P2 values of type string/object/null could evade JS `Math.abs(...) > tolerance` because `NaN > threshold` is false. The bridge now explicitly requires `typeof value === 'number'` and `Number.isFinite` before comparison, with falsification cases.
+3. **P1** WAV RIFF gate checked length/rate/bit depth but not all chunk and format fields. New `assertAuditedWavBytes` requires exact mono linear PCM16, 48kHz, `RIFF/WAVE/fmt /data`, proper chunk lengths and byte/block rates, and a 24,000 frame payload; destructive header tests included.
+4. **P2** SIGTERM during Core solve could orphan a Python child. Bridge tracks its active process, closes listener and sends SIGTERM/short bounded SIGKILL escalation during shutdown; future execution-interrupt E2E evidence is a separate possible hardening test.
+
+**Required before release:** current Studio full CI, real Core-bridge and Chromium CI on precisely pinned repaired Core HEAD; new independent Codex disposition; creator's own Windows/WSL2 listening assessment; scoped adoption decision. Correctness of numerical pressure and audible human character identity remain different claims. Core + Studio remain **Draft and unmerged**.
