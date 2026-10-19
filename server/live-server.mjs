@@ -137,7 +137,10 @@ async function runCore(mapped, runDir) {
     const child = spawn(PYTHON, ['-m', 'morphoacoustics.integration.limited_live',
       '--request', requestFile, '--output-dir', outputDir], {
       cwd: CORE, shell: false, stdio: ['ignore', 'pipe', 'pipe'],
-      env: { ...process.env, PYTHONPATH: path.join(CORE, 'src') },
+      // A fresh cache prefix prevents pre-existing ignored __pycache__ files
+      // from overriding the audited tracked Python source during this run.
+      env: { ...process.env, PYTHONPATH: path.join(CORE, 'src'),
+        PYTHONPYCACHEPREFIX: path.join(runDir, 'python-cache') },
     });
     let stdout = ''; let stderr = '';
     const timer = setTimeout(() => child.kill('SIGKILL'), 180000);
