@@ -64,13 +64,14 @@ git clone https://github.com/ryonakayama234/morphoacoustics-studio.git
 cd morphoacoustics-studio
 git fetch origin feature/cc-a2-studio-two-body-20261019
 git switch --detach FETCH_HEAD
-npm ci
+npm install --global npm@11.6.0
+npm install --no-audit --no-fund
 export MORPHO_CORE_DIR="$(pwd)/../morphoacoustics-cc-a2"
 export MORPHO_PYTHON="$MORPHO_CORE_DIR/.venv/bin/python"
 npm run cc-a2:server
 ```
 
-In a second WSL2 terminal, run `npm run dev` in the same Studio checkout, open the Vite URL and scroll to CC-A2. To exercise legacy X2a independently, run its separate existing service against its independently pinned older Core checkout.
+In a second WSL2 terminal, run `npm run dev` in the same Studio checkout, open the Vite URL, click **「CC-A2 · 2身体の比較実験を開く／閉じる」**, then use the Stage A panel. It is intentionally opt-in so original X2a runs without the new CC-A2 service. To exercise legacy X2a independently, run its separate existing service against its independently pinned older Core checkout.
 
 **Do not use the Core feature branch as a replacement for the old X2a pinned source checkout.** After core PR changes, update the Studio exact SHA, both CI pin and this runbook before claiming new-head compliance.
 
