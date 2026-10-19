@@ -266,17 +266,29 @@ export async function performCC(request, validateResult) {
   return record;
 }
 
+export function newestPhysicalTakes(records, limit = 100) {
+  // Filter before limiting: an old/foreign Core Take cannot displace the
+  // latest valid snapshot. Sort chronological, not random UUID filename order.
+  // Tie-break with immutable request id for deterministic reload behavior.
+  return records.filter((item) => item.core_commit === CORE_SHA
+      && typeof item.created_at === 'string'
+      && !Number.isNaN(Date.parse(item.created_at)))
+    .sort((a, b) =>
+      Date.parse(a.created_at) - Date.parse(b.created_at)
+      || String(a.result?.take_id ?? '').localeCompare(String(b.result?.take_id ?? '')))
+    .slice(-limit)
+    .map(({ request, result, created_at }) => ({ request, result, created_at }));
+}
+
 async function listTakes() {
   const names = (await fs.readdir(path.join(DATA, 'takes')))
-    .filter((n) => /^[0-9a-f-]{36}\.json$/.test(n)).sort();
-  const items = [];
-  for (const filename of names.slice(-100)) {
+    .filter((n) => /^[0-9a-f-]{36}\.json$/.test(n));
+  const records = [];
+  for (const filename of names) {
     const raw = await fs.readFile(path.join(DATA, 'takes', filename), 'utf8');
-    const item = JSON.parse(raw);
-    if (item.core_commit !== CORE_SHA) continue;
-    items.push({ request: item.request, result: item.result, created_at: item.created_at });
+    records.push(JSON.parse(raw));
   }
-  return items;
+  return newestPhysicalTakes(records);
 }
 
 function response(res, status, data) {
