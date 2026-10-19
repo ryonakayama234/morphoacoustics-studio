@@ -42,10 +42,10 @@ export function verifyCoreRevision(coreDir, expectedCommit) {
   // Standard __pycache__ files are not executed because each child process
   // uses a new, empty PYTHONPYCACHEPREFIX outside the Core checkout.
   const ignored = git(['ls-files', '--others', '--ignored', '--exclude-standard', '-z',
-    '--', 'src', 'experiments']).split('\\0').filter(Boolean);
+    '--', 'src', 'experiments']).split('\0').filter(Boolean);
   const forbidden = ignored.filter((name) =>
-    /\\.(py|pyw|pyc|pyo|pth|so|pyd|dll|dylib)$/i.test(name)
-    && !/(^|\\/)__pycache__\\/[^/]+\\.pyc$/i.test(name));
+    /\.(py|pyw|pyc|pyo|pth|so|pyd|dll|dylib)$/i.test(name)
+    && !/(^|\/)__pycache__\/[^/]+\.pyc$/i.test(name));
   if (forbidden.length) {
     throw new Error('Audited Core checkout has ignored executable code ' +
       '(Git ignore/exclude rules cannot hide imported solver code): ' +
