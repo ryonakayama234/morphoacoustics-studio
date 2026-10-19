@@ -12,7 +12,7 @@ import { quantizedRawPressureSha256, X2A_RAW_PRESSURE_SHA256 } from './raw-press
 
 // Full reviewed tree must be explicitly repinned after any Core PR HEAD change.
 // This is a candidate SHA, NOT an accepted main release.
-export const CORE_SHA = '588c52cac2774adbdb2e2fb802cbec04669833e2';
+export const CORE_SHA = 'b569f044bfda309dff1a00cccf8365754e6b1355';
 export const CORE_BACKEND_VERSION = 'cc-a2-axial-live/1';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CORE = path.resolve(process.env.MORPHO_CORE_DIR || path.join(ROOT, '..', 'morphoacoustics'));
