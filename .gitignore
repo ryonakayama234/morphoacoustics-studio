@@ -7,3 +7,6 @@ coverage/
 
 # Generated local-only immutable physical Takes
 .morpho-live-data/
+
+# CC-A2 local physical artifact store and immutable Take snapshots
+.morpho-cc-a2-data/
