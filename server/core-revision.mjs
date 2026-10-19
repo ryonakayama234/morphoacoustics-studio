@@ -35,6 +35,22 @@ export function verifyCoreRevision(coreDir, expectedCommit) {
     throw new Error('Audited Core checkout has modified or untracked files; ' +
       'refusing physical execution. First changes: ' + changes.split('\n').slice(0, 4).join('; ').slice(0, 350));
   }
+  // Ignore rules can hide executable modules from --untracked-files=all.
+  // In particular src/sitecustomize.py runs at Python startup and can forge
+  // an otherwise valid-looking audited numerical receipt. Search ignored
+  // importable code under Core's physical source and experimental roots.
+  // Standard __pycache__ files are not executed because each child process
+  // uses a new, empty PYTHONPYCACHEPREFIX outside the Core checkout.
+  const ignored = git(['ls-files', '--others', '--ignored', '--exclude-standard', '-z',
+    '--', 'src', 'experiments']).split('\\0').filter(Boolean);
+  const forbidden = ignored.filter((name) =>
+    /\\.(py|pyw|pyc|pyo|pth|so|pyd|dll|dylib)$/i.test(name)
+    && !/(^|\\/)__pycache__\\/[^/]+\\.pyc$/i.test(name));
+  if (forbidden.length) {
+    throw new Error('Audited Core checkout has ignored executable code ' +
+      '(Git ignore/exclude rules cannot hide imported solver code): ' +
+      forbidden.slice(0, 4).join('; ').slice(0, 350));
+  }
   // Git status trusts assume-unchanged/skip-worktree index flags, potentially
   // hiding edited Python files while reporting an apparently clean checkout.
   // Refuse those (and other non-ordinary) index entries rather than claiming
