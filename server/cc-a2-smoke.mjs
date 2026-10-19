@@ -50,6 +50,11 @@ for(const x of [first, second]) {
     x.result.artifacts.find((a) => a.kind === 'physical-receipt').ref)).toString('utf8'));
   assert.equal(quantizedRawPressureSha256(npy), receipt.raw_pressure.quantized_sha256);
 }
+// Preserve easy-to-audition, separately named fresh WAV evidence in CI.
+for (const [label, take] of [['A', first], ['B', second]]) {
+  const uri = take.result.artifacts.find((artifact) => artifact.kind === 'audio').ref;
+  await writeFile('cc-a2-body-' + label + '.wav', await bytes(uri));
+}
 assert.notEqual(first.result.embodiment.preparation_digest, second.result.embodiment.preparation_digest);
 assert.notEqual(first.result.provenance.input_digest, second.result.provenance.input_digest);
 assert.equal(first.result.embodiment.preset_id, 'v3b-axial-M0');
