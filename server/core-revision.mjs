@@ -45,6 +45,7 @@ export function verifyCoreRevision(coreDir, expectedCommit) {
     '--', 'src', 'experiments',
     // Top-level launch-time shims can also be imported from the Core cwd.
     ':(top,glob)*.py', ':(top,glob)*.pyw', ':(top,glob)*.pth',
+    ':(top,glob)*.pyc', ':(top,glob)*.pyo',
     ':(top,glob)*.so', ':(top,glob)*.pyd', ':(top,glob)*.dll',
     ':(top,glob)*.dylib']).split('\0').filter(Boolean);
   const forbidden = ignored.filter((name) =>
