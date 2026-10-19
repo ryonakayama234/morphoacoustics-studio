@@ -34,9 +34,10 @@ function npyFloat64Offset(bytes, sampleCount) {
     throw new Error('Raw-pressure NPY header length invalid.');
   }
   const header = bytes.toString('latin1', start, start + headerLength);
+  const shape = header.match(/['"]shape['"]\s*:\s*\(\s*(\d+)\s*,\s*\)/);
   if (!/['"]descr['"]\s*:\s*['"]<f8['"]/.test(header)
     || !/['"]fortran_order['"]\s*:\s*False/.test(header)
-    || !new RegExp("['\\\"]shape['\\\"]\\s*:\\s*\\(\\s*" + sampleCount + "\\s*,\\s*\\)").test(header)) {
+    || !shape || Number(shape[1]) !== sampleCount) {
     throw new Error('Raw-pressure NPY dtype, ordering, or shape violates the frozen fixture.');
   }
   const offset = start + headerLength;
