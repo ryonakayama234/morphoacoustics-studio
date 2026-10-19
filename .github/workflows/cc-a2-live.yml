@@ -102,6 +102,14 @@ jobs:
         with:
           name: cc-a2-studio-evidence
           path: |
+            cc-a2-body-A.wav
+            cc-a2-body-B.wav
+            ${{ runner.temp }}/cc-a2-data/takes/*.json
+            ${{ runner.temp }}/cc-a2-data/artifacts/*.wav
+            ${{ runner.temp }}/cc-a2-data/artifacts/*.npy
+            ${{ runner.temp }}/cc-a2-data/artifacts/*.csv
+            ${{ runner.temp }}/cc-a2-data/artifacts/*.json
+            ${{ runner.temp }}/cc-a2-browser-evidence/takes/*.json
             cc-a2-smoke-summary.json
             cc-a2-server.log
             cc-a2-restart.log
