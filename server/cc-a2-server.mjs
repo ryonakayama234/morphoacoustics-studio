@@ -1,7 +1,7 @@
 /** CC-A2 candidate: separate limited local v1 bridge; does not modify adopted X2a. */
 import { createHash, randomUUID } from 'node:crypto';
 import { createServer } from 'node:http';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { promises as fs } from 'node:fs';
 import { isDeepStrictEqual } from 'node:util';
 import path from 'node:path';
@@ -26,6 +26,50 @@ const FILES = Object.freeze({
   'physical-receipt': ['physical_receipt.json', '.json', 'application/json'],
 });
 const BODY_LENGTH = Object.freeze({ 'v3b-axial-M0': 0.160, 'v3b-axial-M1': 0.176 });
+let activeChild = null;
+
+// Direct Python script execution prepends CORE/tools to sys.path. Legacy X2a
+// verifyCoreRevision scans src/experiments and root ignored executables only.
+// Block ignored Python code in the additional executed tools/ import directory.
+export function assertNoIgnoredToolExecutables(coreDir) {
+  const proc = spawnSync('git', [
+    'ls-files', '--others', '--ignored', '--exclude-standard', '-z', '--', 'tools'
+  ], { cwd: coreDir, encoding: 'utf8', timeout: 10000, maxBuffer: 1024 * 1024 });
+  if (proc.status !== 0 || proc.error) {
+    throw new Error('Cannot inspect ignored CC-A2 tools source: ' +
+      (proc.error?.message || proc.stderr || 'git failed').slice(0, 220));
+  }
+  const files = proc.stdout.split('\\0').filter(Boolean);
+  const unsafe = files.filter((filename) =>
+    /\\.(py|pyw|pyc|pyo|pth|so|pyd|dll|dylib)$/i.test(filename)
+    && !/(^|\\/)__pycache__\\/[^/]+\\.pyc$/i.test(filename));
+  if (unsafe.length) {
+    throw new Error('Ignored executable in Core tools/ is not an audited dependency: ' +
+      unsafe.slice(0, 4).join(', '));
+  }
+}
+
+export function assertAuditedWavBytes(bytes) {
+  // X2a/CC-A2 intentionally emit a single canonical 44-byte RIFF PCM16
+  // mono header and 24,000 48kHz frames. Decode against the actual bytes.
+  if (!Buffer.isBuffer(bytes) || bytes.length !== 44 + 24000 * 2
+    || bytes.toString('ascii', 0, 4) !== 'RIFF'
+    || bytes.readUInt32LE(4) !== bytes.length - 8
+    || bytes.toString('ascii', 8, 12) !== 'WAVE'
+    || bytes.toString('ascii', 12, 16) !== 'fmt '
+    || bytes.readUInt32LE(16) !== 16
+    || bytes.readUInt16LE(20) !== 1
+    || bytes.readUInt16LE(22) !== 1
+    || bytes.readUInt32LE(24) !== 48000
+    || bytes.readUInt32LE(28) !== 96000
+    || bytes.readUInt16LE(32) !== 2
+    || bytes.readUInt16LE(34) !== 16
+    || bytes.toString('ascii', 36, 40) !== 'data'
+    || bytes.readUInt32LE(40) !== 24000 * 2) {
+    throw new Error('Invalid 0.5s / 48kHz mono PCM16 RIFF/WAV structure');
+  }
+}
+
 
 function sha(data) { return createHash('sha256').update(data).digest('hex'); }
 function reject(code, message) { return { code, message }; }
@@ -73,6 +117,8 @@ export function assertCausalResult(request, result, receipt, rawBytes) {
   if (!Object.hasOwn(BODY_LENGTH, body.preset_id) || body.preset_revision !== 1
     || !receipt || receipt.body.preset_id !== body.preset_id || receipt.body.revision !== 1
     || receipt.body.preparation_digest !== result.embodiment.preparation_digest
+    || typeof receipt.body.length_m !== 'number'
+    || !Number.isFinite(receipt.body.length_m)
     || Math.abs(receipt.body.length_m - BODY_LENGTH[body.preset_id]) > 1e-12
     || receipt.source.id !== 'lf_fixed' || receipt.source.f0_hz !== 100
     || receipt.acoustic_calls !== 102 || receipt.raw_pressure.samples !== 24000
@@ -83,7 +129,9 @@ export function assertCausalResult(request, result, receipt, rawBytes) {
   }
   const expected = body.preset_id === 'v3b-axial-M0' ? [275, 2101.75] : [249.75, 1910.75];
   for (let i = 0; i < 2; i++) {
-    if (Math.abs(receipt.endpoint_peak_hz[i] - expected[i]) > 0.25) {
+    if (typeof receipt.endpoint_peak_hz[i] !== 'number'
+      || !Number.isFinite(receipt.endpoint_peak_hz[i])
+      || Math.abs(receipt.endpoint_peak_hz[i] - expected[i]) > 0.25) {
       throw new Error('Core endpoint resonance differs from frozen Experiment028 oracle.');
     }
   }
@@ -111,6 +159,7 @@ async function executeCore(request, runDir) {
   const output = path.join(runDir, 'output');
   await fs.writeFile(input, JSON.stringify(request), { flag: 'wx' });
   verifyCoreRevision(CORE, CORE_SHA);
+  assertNoIgnoredToolExecutables(CORE);
   return await new Promise((resolve, reject) => {
     const child = spawn(PYTHON, [path.join(CORE, 'tools', 'cc_a2_live.py'),
       '--request', input, '--output-dir', output], {
@@ -118,6 +167,7 @@ async function executeCore(request, runDir) {
       env: { ...process.env, PYTHONPATH: path.join(CORE, 'src'),
         PYTHONPYCACHEPREFIX: path.join(runDir, 'pycache') },
     });
+    activeChild = child;
     let stdout = ''; let stderr = ''; let settled = false;
     const timer = setTimeout(() => child.kill('SIGKILL'), 180000);
     child.stdout.on('data', (part) => {
@@ -130,6 +180,7 @@ async function executeCore(request, runDir) {
     });
     const done = (error, result) => {
       if (settled) return; settled = true; clearTimeout(timer);
+      if (activeChild === child) activeChild = null;
       if (error) reject(error); else resolve({ result, output });
     };
     child.on('error', (e) => done(e));
@@ -195,11 +246,7 @@ export async function performCC(request, validateResult) {
       }
       data[item.kind] = await checkedFile(output, def[0]);
     }
-    if (data.audio.length !== 48044 || data.audio.toString('ascii', 0, 4) !== 'RIFF'
-      || data.audio.toString('ascii', 8, 12) !== 'WAVE'
-      || data.audio.readUInt32LE(24) !== 48000 || data.audio.readUInt16LE(34) !== 16) {
-      throw new Error('Invalid bounded 0.5s PCM16 audio.');
-    }
+    assertAuditedWavBytes(data.audio);
     const receipt = JSON.parse(data['physical-receipt'].toString('utf8'));
     assertCausalResult(request, result, receipt, data['raw-pressure']);
   } else {
@@ -243,6 +290,7 @@ function response(res, status, data) {
 export async function startServer() {
   if (!Number.isInteger(PORT) || PORT < 1024 || PORT > 65535) throw new Error('Invalid CC-A2 port');
   verifyCoreRevision(CORE, CORE_SHA);
+  assertNoIgnoredToolExecutables(CORE);
   for (const folder of ['runs', 'takes', 'artifacts']) {
     await fs.mkdir(path.join(DATA, folder), { recursive: true });
   }
@@ -284,6 +332,25 @@ export async function startServer() {
   });
   server.requestTimeout = 15000;
   server.headersTimeout = 10000;
+  // Gracefully stop the active physical solver on Ctrl-C / SIGTERM instead
+  // of leaving an orphan running across a bridge restart.
+  let shuttingDown = false;
+  async function shutdown() {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    server.close();
+    const child = activeChild;
+    if (child && child.exitCode === null && child.signalCode === null) {
+      const finished = new Promise((resolve) => child.once('close', resolve));
+      child.kill('SIGTERM');
+      await Promise.race([finished, new Promise((resolve) => setTimeout(resolve, 2500))]);
+      if (child.exitCode === null && child.signalCode === null) child.kill('SIGKILL');
+      await Promise.race([finished, new Promise((resolve) => setTimeout(resolve, 1000))]);
+    }
+    process.exitCode = 0;
+  }
+  process.once('SIGTERM', shutdown);
+  process.once('SIGINT', shutdown);
   server.listen(PORT, '127.0.0.1', () => console.log('CC-A2 bounded bridge on 127.0.0.1:' + PORT));
   return server;
 }
