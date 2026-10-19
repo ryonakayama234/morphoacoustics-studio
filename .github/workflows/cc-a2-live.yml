@@ -83,6 +83,16 @@ jobs:
             assert.ok(takes.some(t=>t.request.embodiment.preset_id==="v3b-axial-M1"));
             console.log("CC-A2 restart/reload persistence PASS");
           '
+      - name: Install CI-only Chromium for creator UI
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Chromium Perform + audible A/B + reload/restart
+        env:
+          MORPHO_CORE_DIR: ${{ github.workspace }}/core
+          MORPHO_PYTHON: python
+          CC_A2_BROWSER_DATA_DIR: ${{ runner.temp }}/cc-a2-browser-evidence
+        run: node server/cc-a2-browser-smoke.mjs
       - name: Archive E2E physical evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -92,4 +102,6 @@ jobs:
             cc-a2-smoke-summary.json
             cc-a2-server.log
             cc-a2-restart.log
+            ${{ runner.temp }}/cc-a2-browser-evidence/cc-a2-browser.png
+            ${{ runner.temp }}/cc-a2-browser-evidence/*.log
           if-no-files-found: warn
