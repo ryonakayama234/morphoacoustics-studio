@@ -1,0 +1,118 @@
+name: cc-a2-live-two-body
+
+on:
+  pull_request:
+    paths:
+      - "src/ccA2/**"
+      - "src/App.tsx"
+      - "server/cc-a2-*.mjs"
+      - "vite.config.ts"
+      - "package.json"
+      - "docs/cc-a2-*.md"
+      - ".github/workflows/cc-a2-live.yml"
+  push:
+    paths:
+      - "src/ccA2/**"
+      - "src/App.tsx"
+      - "server/cc-a2-*.mjs"
+      - "vite.config.ts"
+      - "package.json"
+      - "docs/cc-a2-*.md"
+      - ".github/workflows/cc-a2-live.yml"
+  workflow_dispatch:
+
+jobs:
+  creator-physical:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: ryonakayama234/morphoacoustics
+          ref: b569f044bfda309dff1a00cccf8365754e6b1355
+          path: core
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.16.0"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Use established Studio npm peer dependency environment
+        run: npm install --global npm@11.6.0
+      - name: Install Studio and exact Core numerical dependencies
+        run: |
+          npm install --no-audit --no-fund
+          python -m pip install "numpy==2.4.6"
+          python -m pip install -e 'core[dev]'
+          python -c "import numpy; assert numpy.__version__=='2.4.6'"
+      - name: Studio typecheck, unit and contract security tests
+        run: |
+          npm run build
+          npm test
+          node --test server/cc-a2-server.policy.mjs
+      - name: Execute fresh two-body physics and persist Takes
+        env:
+          MORPHO_CORE_DIR: ${{ github.workspace }}/core
+          MORPHO_PYTHON: python
+          MORPHO_CC_A2_DATA_DIR: ${{ runner.temp }}/cc-a2-data
+        run: |
+          set -e
+          node server/cc-a2-server.mjs > cc-a2-server.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" || true' EXIT
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8766/cc-a2/health; then break; fi
+            sleep 1
+          done
+          if ! curl -fsS http://127.0.0.1:8766/cc-a2/health >/dev/null; then
+            echo "CC-A2 service failed to start"; cat cc-a2-server.log; exit 1
+          fi
+          node server/cc-a2-smoke.mjs
+          kill "$SERVER_PID" || true
+          wait "$SERVER_PID" || true
+          node server/cc-a2-server.mjs > cc-a2-restart.log 2>&1 &
+          SERVER_PID=$!
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8766/cc-a2/health; then break; fi
+            sleep 1
+          done
+          node --input-type=module -e '
+            import assert from "node:assert/strict";
+            const r=await fetch("http://127.0.0.1:8766/cc-a2/takes");
+            assert.equal(r.status,200);
+            const takes=await r.json();
+            assert.ok(takes.some(t=>t.request.embodiment.preset_id==="v3b-axial-M0"));
+            assert.ok(takes.some(t=>t.request.embodiment.preset_id==="v3b-axial-M1"));
+            console.log("CC-A2 restart/reload persistence PASS");
+          '
+      - name: Install CI-only Chromium for creator UI
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Chromium Perform + audible A/B + reload/restart
+        env:
+          MORPHO_CORE_DIR: ${{ github.workspace }}/core
+          MORPHO_PYTHON: python
+          CC_A2_BROWSER_DATA_DIR: ${{ runner.temp }}/cc-a2-browser-evidence
+        run: node server/cc-a2-browser-smoke.mjs
+      - name: Archive E2E physical evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cc-a2-studio-evidence
+          path: |
+            cc-a2-body-A.wav
+            cc-a2-body-B.wav
+            ${{ runner.temp }}/cc-a2-data/takes/*.json
+            ${{ runner.temp }}/cc-a2-data/artifacts/*.wav
+            ${{ runner.temp }}/cc-a2-data/artifacts/*.npy
+            ${{ runner.temp }}/cc-a2-data/artifacts/*.csv
+            ${{ runner.temp }}/cc-a2-data/artifacts/*.json
+            ${{ runner.temp }}/cc-a2-browser-evidence/takes/*.json
+            cc-a2-smoke-summary.json
+            cc-a2-server.log
+            cc-a2-restart.log
+            ${{ runner.temp }}/cc-a2-browser-evidence/cc-a2-browser.png
+            ${{ runner.temp }}/cc-a2-browser-evidence/*.log
+          if-no-files-found: warn

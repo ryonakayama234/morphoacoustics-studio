@@ -1,3 +1,4 @@
+import { CCAtelier } from './ccA2/CCAtelier';
 import { useEffect, useMemo, useState } from 'react';
 import mioRequest from '../vendor/performance-contract/v0/examples/request.json';
 import upstream from '../vendor/performance-contract/UPSTREAM.json';
@@ -352,6 +353,8 @@ export default function App() {
   const selectedA = takes.find((take) => take.result.take_id === comparison.a);
   const selectedB = takes.find((take) => take.result.take_id === comparison.b);
 
+  const [ccA2Open, setCcA2Open] = useState(false);
+
   return (
     <main className="studio-shell">
       <header className="studio-header">
@@ -557,6 +560,13 @@ export default function App() {
         </div>
       </section>
 
+      <section className="panel" aria-label="CC-A2身体比較入口">
+        <button type="button" className="secondary" aria-expanded={ccA2Open}
+          onClick={() => setCcA2Open((open) => !open)}>
+          CC-A2 · 2身体の比較実験を開く／閉じる
+        </button>
+        {ccA2Open && <CCAtelier draft={draft} />}
+      </section>
       <footer className="footer-note">
         Contract <code>{mioRequest.schema_version}</code> · upstream <code>{upstream.commit.slice(0, 12)}</code> ·
         草稿とTake履歴の索引はこのブラウザに保存されます。X2a生成WAV/traceはlocalhostサーバーのディスクにSHA-256アドレスで永続保存されます。
