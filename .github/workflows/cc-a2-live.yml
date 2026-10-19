@@ -35,13 +35,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22.16.0"
-          cache: npm
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
       - name: Install Studio and exact Core numerical dependencies
         run: |
-          npm ci
+          npm install --no-audit --no-fund
           python -m pip install "numpy==2.4.6"
           python -m pip install -e 'core[dev]'
           python -c "import numpy; assert numpy.__version__=='2.4.6'"
