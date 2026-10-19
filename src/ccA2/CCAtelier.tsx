@@ -130,7 +130,7 @@ export function CCAtelier({ draft }: { draft: StudioDraft }) {
   const a = takes.find((x) => x.result.take_id === selectedA);
   const b = takes.find((x) => x.result.take_id === selectedB);
   return (
-    <section className="comparison-panel" aria-labelledby="cc-a2-heading">
+    <section className="cc-a2-workshop" aria-labelledby="cc-a2-heading">
       <div className="panel-heading">
         <div>
           <p className="step-label">CC-A2 · Character Creator Stage A (Draft)</p>
