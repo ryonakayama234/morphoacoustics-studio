@@ -56,6 +56,7 @@ try {
   const errors=[];
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto('http://127.0.0.1:5173/');
+  await page.getByRole('button', { name: 'CC-A2 · 2身体の比較実験を開く／閉じる' }).click();
   const section = page.locator('section[aria-labelledby="cc-a2-heading"]');
   await section.waitFor();
   const buttons = section.getByRole('button', { name: 'この身体で新規Perform' });
@@ -87,6 +88,7 @@ try {
   assert.ok(played.duration >= 0.49 && played.duration <= 0.51);
   assert.ok(played.time > 0);
   await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.getByRole('button', { name: 'CC-A2 · 2身体の比較実験を開く／閉じる' }).click();
   await section.locator('.take-card').nth(1).waitFor({timeout:15000});
   assert.equal(await section.locator('.compare-card audio').count(), 2);
   await stop(bridge);
@@ -95,6 +97,7 @@ try {
   });
   await ready('http://127.0.0.1:8766/cc-a2/health', bridge);
   await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.getByRole('button', { name: 'CC-A2 · 2身体の比較実験を開く／閉じる' }).click();
   await section.locator('.take-card').nth(1).waitFor({timeout:15000});
   assert.equal(await section.locator('.compare-card audio').count(), 2);
   assert.deepEqual(errors, []);
