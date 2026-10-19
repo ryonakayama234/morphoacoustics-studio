@@ -33,7 +33,7 @@ function reject(code, message) { return { code, message }; }
 async function makeValidator(type) {
   // Read ONLY the exact pinned upstream Core v0+v1 contract. No Studio-forked
   // schema or cross-language recreation of the Python input digest algorithm.
-  const ajv = new Ajv2020({ allErrors: true, strict: true, strictRequired: false });
+  const ajv = new Ajv2020({ allErrors: true, strict: true, strictTypes: false, strictRequired: false });
   for (const [version, names] of [
     ['v0', ['common', 'character', 'script', 'direction', 'performance-request', 'performance-result']],
     ['v1', ['common', 'performance-request', 'performance-result']],
