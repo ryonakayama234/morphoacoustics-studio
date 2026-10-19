@@ -309,3 +309,34 @@ These verify creator usability, **not** the qualification of the physical model 
 - [ ] Only after both independent reviews and green exact-head CI: explicit `GO_LIMITED` decision, reviewed squash merge to main, post-merge verification, then Issue #11 closure.
 
 If a credible separate scientific reviewer is unavailable, remain **HOLD / Draft / unmerged**. Approval must not be fabricated by the implementer. Keep Core and user Take storage unchanged, and preserve all existing immutable evidence.
+
+## 2026-10-19 security and bounded science review continuation
+
+Independent Codex code review on `7d3be7f` found an executable-import bypass:
+an ignored `src/sitecustomize.py` can escape `git status` while executing at
+Python startup. The bridge now rejects ignored executable source under
+Core `src/`, `experiments/` and relevant root startup paths even when hidden by
+tracked `.gitignore`, `.git/info/exclude`, or a global excludes file.
+Each Core child also gets a fresh, isolated `PYTHONPYCACHEPREFIX`, preventing
+previously ignored `__pycache__` bytecode from being loaded in preference to
+audited source. Existing virtual environments are otherwise trusted local
+dependencies, not certified against malicious environment installation.
+Negative policy tests reproduce each false-clean Git case.
+
+For an independent *numerical* cross-check, Studio now parses
+`raw_pressure_pa.npy` as a 24,000-element little-endian float64 vector,
+applies the frozen 1e-9 Pa quantization with nearest-even int64 rounding in
+Node.js, and requires the exact Experiment-029 SHA-256 **before any Take or
+artifact persistence**. This examines emitted raw bytes, not merely Core's
+self-reported provenance. The algorithm has synthetic ties-to-even, invalid NPY
+and tamper regressions, plus a genuine Core WAV/NPY/CSV integration smoke.
+The original Core science threshold is unchanged.
+
+The source-led [AI-assisted science, contract and provenance audit](x2a-scientific-contract-audit.md)
+records the exact upstream experiment claims, five byte-identical v0 schemas,
+data/causality boundary, 102 physical transfers, 51 trace endpoints, raw/WAV
+separation and all unverified human-phonetic claims. **Its reviewer is the
+implementation agent; it is not an independent external scientific peer review.**
+The user's delegation permits an evidence-based ChatGPT technical audit as the
+practical local release standard. A separate independent Codex security/code
+finding must still be resolved before `GO_LIMITED` and squash merge.
