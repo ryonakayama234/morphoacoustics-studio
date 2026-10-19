@@ -97,8 +97,8 @@ export function CCAtelier({ draft }: { draft: StudioDraft }) {
         if (valid && Array.isArray(items)) {
           const existing = items as Take[];
           setTakes(existing);
-          setSelectedA(existing.findLast((x) => x.request.embodiment.preset_id === PRESETS[0].id)?.result.take_id ?? null);
-          setSelectedB(existing.findLast((x) => x.request.embodiment.preset_id === PRESETS[1].id)?.result.take_id ?? null);
+          setSelectedA([...existing].reverse().find((x) => x.request.embodiment.preset_id === PRESETS[0].id)?.result.take_id ?? null);
+          setSelectedB([...existing].reverse().find((x) => x.request.embodiment.preset_id === PRESETS[1].id)?.result.take_id ?? null);
         }
       })
       .catch((e: unknown) => { if (valid) setError(e instanceof Error ? e.message : String(e)); })
