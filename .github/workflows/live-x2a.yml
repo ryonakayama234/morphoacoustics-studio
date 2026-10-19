@@ -8,6 +8,8 @@ on:
       - "src/App.tsx"
       - ".github/workflows/live-x2a.yml"
       - "vendor/performance-contract/**"
+      - "docs/x2a-live-take.md"
+      - "docs/x2a-scientific-contract-audit.md"
   workflow_dispatch:
 
 jobs:
