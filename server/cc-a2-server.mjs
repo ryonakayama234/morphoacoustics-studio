@@ -39,10 +39,10 @@ export function assertNoIgnoredToolExecutables(coreDir) {
     throw new Error('Cannot inspect ignored CC-A2 tools source: ' +
       (proc.error?.message || proc.stderr || 'git failed').slice(0, 220));
   }
-  const files = proc.stdout.split('\\0').filter(Boolean);
+  const files = proc.stdout.split('\0').filter(Boolean);
   const unsafe = files.filter((filename) =>
-    /\\.(py|pyw|pyc|pyo|pth|so|pyd|dll|dylib)$/i.test(filename)
-    && !/(^|\\/)__pycache__\\/[^/]+\\.pyc$/i.test(filename));
+    /\.(py|pyw|pyc|pyo|pth|so|pyd|dll|dylib)$/i.test(filename)
+    && !/(^|\/)__pycache__\/[^/]+\.pyc$/i.test(filename));
   if (unsafe.length) {
     throw new Error('Ignored executable in Core tools/ is not an audited dependency: ' +
       unsafe.slice(0, 4).join(', '));
