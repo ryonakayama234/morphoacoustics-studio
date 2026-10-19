@@ -30,7 +30,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: ryonakayama234/morphoacoustics
-          ref: 588c52cac2774adbdb2e2fb802cbec04669833e2
+          ref: b569f044bfda309dff1a00cccf8365754e6b1355
           path: core
       - uses: actions/setup-node@v4
         with:
