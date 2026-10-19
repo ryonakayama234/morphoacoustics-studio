@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { assertAuditedRawPressureBytes, X2A_RAW_PRESSURE_SHA256 } from './raw-pressure-oracle.mjs';
 
 const base = 'http://127.0.0.1:8765';
 const req = JSON.parse(readFileSync(new URL('../vendor/performance-contract/v0/examples/request.json', import.meta.url), 'utf8'));
@@ -49,7 +50,8 @@ assert.equal(wav.toString('ascii', 0, 4), 'RIFF');
 assert.equal(wav.readUInt32LE(24), 48000);
 assert.equal(wav.length, 44 + 24000 * 2);
 await fetchAndHash(artifact(a, 'dynamic-trace'));
-await fetchAndHash(artifact(a, 'raw-pressure'));
+const { bytes: rawPressure } = await fetchAndHash(artifact(a, 'raw-pressure'));
+assert.equal(assertAuditedRawPressureBytes(rawPressure), X2A_RAW_PRESSURE_SHA256);
 const manifest = await fetch(base + artifact(a, 'live-manifest').ref).then((r) => r.json());
 assert.equal(manifest.core_result.execution.acoustic_transfer_calls, 102);
 assert.equal(manifest.core_result.provenance.numpy_version, '2.4.6');
