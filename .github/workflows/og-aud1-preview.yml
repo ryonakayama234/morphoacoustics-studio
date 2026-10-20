@@ -1,0 +1,104 @@
+name: OG-AUD1 exact-pinned Core→Studio physical preview E2E
+
+on:
+  pull_request:
+    paths:
+      - "server/og-aud1-*.mjs"
+      - "src/ogAud1/**"
+      - "src/App.tsx"
+      - "package.json"
+      - "vite.config.ts"
+      - "docs/og-aud1/**"
+      - ".github/workflows/og-aud1-preview.yml"
+  workflow_dispatch:
+
+jobs:
+  fixed-physical-pair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: ryonakayama234/morphoacoustics
+          ref: f689d5c61bfb05728b326f3e811deab4eba37750
+          path: core
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.16.0"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install exact numerical and Studio dependencies
+        run: |
+          npm install --global npm@11.6.0
+          npm install --no-audit --no-fund
+          python -m pip install "numpy==2.4.6"
+          python -m pip install -e core
+      - name: Exact source audit + typecheck and all prior tests
+        run: |
+          python -m unittest discover -s core/experiments/046_og_aud1_pinned_preview -p 'test_*.py' -v
+          npm run build
+          npm test
+          node --test server/og-aud1-server.policy.mjs
+          node --test server/core-revision.policy.mjs
+          node --check server/og-aud1-server.mjs
+          node --check server/og-aud1-browser-smoke.mjs
+      - name: Start physically pinned bridge and prove actual source->Take
+        env:
+          MORPHO_CORE_DIR: ${{ github.workspace }}/core
+          MORPHO_OG_AUD1_DATA_DIR: ${{ runner.temp }}/og-aud1-integration-data
+          MORPHO_PYTHON: python
+        run: |
+          set -e
+          node server/og-aud1-server.mjs > og-aud1-server.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 45); do
+            if curl -fsS http://127.0.0.1:8767/og-aud1/health; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8767/og-aud1/health
+          node server/og-aud1-smoke.mjs
+          kill "$SERVER_PID" || true
+          wait "$SERVER_PID" || true
+          node server/og-aud1-server.mjs > og-aud1-restart.log 2>&1 &
+          SERVER_PID=$!
+          for i in $(seq 1 45); do
+            if curl -fsS http://127.0.0.1:8767/og-aud1/health; then break; fi
+            sleep 1
+          done
+          node --input-type=module -e '
+            import assert from "node:assert/strict";
+            const r=await fetch("http://127.0.0.1:8767/og-aud1/takes");
+            assert.equal(r.status,200);
+            const pairs=await r.json();
+            assert.ok(pairs.some(x=>x.records?.length===2));
+            console.log("OG-AUD1 persisted immutable pair survives bridge restart");
+          '
+      - name: Install CI-only Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Automated real Chromium graph, play, refresh and restart
+        env:
+          MORPHO_CORE_DIR: ${{ github.workspace }}/core
+          MORPHO_PYTHON: python
+          MORPHO_OG_AUD1_BROWSER_DATA_DIR: ${{ runner.temp }}/og-aud1-browser
+        run: node server/og-aud1-browser-smoke.mjs
+      - name: Preserve auditable original data, WAV and screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: og-aud1-preview-exact-core-e2e
+          path: |
+            og-aud1-*.wav
+            og-aud1-ci-summary.json
+            og-aud1-server.log
+            og-aud1-restart.log
+            ${{ runner.temp }}/og-aud1-integration-data/takes/*.json
+            ${{ runner.temp }}/og-aud1-integration-data/artifacts/*.json
+            ${{ runner.temp }}/og-aud1-integration-data/artifacts/*.wav
+            ${{ runner.temp }}/og-aud1-browser/og-aud1-browser.png
+            ${{ runner.temp }}/og-aud1-browser/*.log
+          if-no-files-found: warn

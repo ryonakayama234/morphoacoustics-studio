@@ -14,3 +14,6 @@ coverage/
 # Named CI/local real-physics audition artifacts (generated, never committed)
 cc-a2-body-*.wav
 cc-a2-smoke-summary.json
+
+.morpho-og-aud1-data/
+.morpho-og-aud1-browser-smoke/
