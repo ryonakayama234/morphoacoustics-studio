@@ -1,4 +1,5 @@
 import { CCAtelier } from './ccA2/CCAtelier';
+import { OGAud1Atelier } from './ogAud1/OGAud1Atelier';
 import { useEffect, useMemo, useState } from 'react';
 import mioRequest from '../vendor/performance-contract/v0/examples/request.json';
 import upstream from '../vendor/performance-contract/UPSTREAM.json';
@@ -354,6 +355,7 @@ export default function App() {
   const selectedB = takes.find((take) => take.result.take_id === comparison.b);
 
   const [ccA2Open, setCcA2Open] = useState(false);
+  const [ogAud1Open, setOgAud1Open] = useState(false);
 
   return (
     <main className="studio-shell">
@@ -566,6 +568,13 @@ export default function App() {
           CC-A2 · 2身体の比較実験を開く／閉じる
         </button>
         {ccA2Open && <CCAtelier draft={draft} />}
+      </section>
+      <section className="panel" aria-label="OG-AUD1 3器官分岐の研究試聴">
+        <button type="button" className="secondary" aria-expanded={ogAud1Open}
+          onClick={() => setOgAud1Open((open) => !open)}>
+          OG-AUD1 · 3器官の物理A/B実験を開く／閉じる
+        </button>
+        {ogAud1Open && <OGAud1Atelier characterId={draft.characterId} />}
       </section>
       <footer className="footer-note">
         Contract <code>{mioRequest.schema_version}</code> · upstream <code>{upstream.commit.slice(0, 12)}</code> ·
