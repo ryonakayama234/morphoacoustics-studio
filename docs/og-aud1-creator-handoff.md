@@ -88,3 +88,29 @@ Character + Script/Direction                       [Studio, creative]
 - **D — Adoption**: Independent numerical, contract/security, creator audio pilot (N=1 separately identified), explicit limited permission. Status: **NOT ADOPTED**.
 
 Do not merge this planning PR as though B–D passed. An expert implementer may select the internal adapter details after physical and security review; user does not need to manage Git. Keep system graph, data map and experiment/audition ledger synchronized in **each subsequent implementing PR**.
+
+## Gate A physical-audition UX amendment (2026-10-20, candidate)
+
+Cross-repo evidence: [Core Gate A focused review](https://github.com/ryonakayama234/morphoacoustics/blob/research/og-aud1-gatea-20261020/docs/research/og-aud1/GATE_A_REVIEW.md). Under the **specific ideal, lossless, both-terminations-matched** OG-AUD1 fixture, changing distal B/C *tube length* alone cannot affect `p(A.in)`. Show **C cross-section** as the only selected physical intervention, rather than implying every organ dimension is audible. This is a restricted proof-of-concept, not a fully editable Character Creator.
+
+Avoid a per-Take automatic peak normalization that destroys the physics-derived pressure-amplitude ratio. **Proposed A/B implementation gate:** use a documented common gain for the two clips, archive both raw Pa arrays and the pair gain/PCM receipts, and compare the two physical Takes only after both pass all Core and Studio trust checks. This is a candidate requiring a Core-backed finite source, gain/FFT preregistration and integration review; the current CC-A2 Stage A flow is not changed. The monitor is still labeled **物理音圧モニター（音源Port・非放射音）**, not a radiated creature voice.
+
+### Artist-visible minimal result (future, not claimed implemented)
+
+```text
+same Character / same prescribed source U(t)
+                 |
+           frozen J topology
+                 |
+     +-----------+-----------+
+     |                       |
+C area = 1.5 cm²          C area = 6.0 cm²
+     |                       |
+Core raw p(A.in,t)        Core raw p(A.in,t)
+     |                       |
+     +-- one shared playback scale --+
+                 |
+       inspectable immutable A/B Takes
+```
+
+No new UI code, runnable adapter, verified 48k WAV or audition trial is supplied by this documentation-only update.
