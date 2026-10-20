@@ -114,3 +114,7 @@ Core raw p(A.in,t)        Core raw p(A.in,t)
 ```
 
 No new UI code, runnable adapter, verified 48k WAV or audition trial is supplied by this documentation-only update.
+
+### Executed Core physical preflight — not Studio audio integration
+
+Core [Experiment 043](https://github.com/ryonakayama234/morphoacoustics/blob/research/og-aud1-gatea-20261020/experiments/043_og_aud1_preflight/RESULTS.md) now has a **Wolfram-executed exploratory 12-state port-law calculation**, including matched-length null and wrong particle-velocity junction law. It validates no new browser functionality and emits no 48k WAV. Preserve the creator acceptance dependency `Core frozen broadband Gate B → pinned adapter → paired immutable Take → human listening`; no Studio bridge should treat this preflight as production entitlement.
