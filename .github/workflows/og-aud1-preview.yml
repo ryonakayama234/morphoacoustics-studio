@@ -21,7 +21,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: ryonakayama234/morphoacoustics
-          ref: 9e30b2e787ae648ff18fa256a04d394ef38df0d4
+          ref: f689d5c61bfb05728b326f3e811deab4eba37750
           path: core
       - uses: actions/setup-node@v4
         with:
