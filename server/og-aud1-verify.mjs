@@ -4,7 +4,7 @@
 import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
 
-export const CORE_SHA = '514e84a7c6bcf3a1268a6a6b54c8fae15a44748e';
+export const CORE_SHA = '9e30b2e787ae648ff18fa256a04d394ef38df0d4';
 export const SOURCE_SHA = 'sha256:52bbebf4fec46861b252d0abf81a239f1396e5ec499527bd5168a299f9eafddd';
 export const EXPECTED_BODIES = Object.freeze({ small_C: .00015, large_C: .0006 });
 const FPS=48000, N=48000, RHO=1.2, C=343, S=.0003, LA=.08, LB=.09, LC=.06;
