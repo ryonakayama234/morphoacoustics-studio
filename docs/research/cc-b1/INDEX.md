@@ -7,3 +7,6 @@ Parent: [Studio Epic #12](https://github.com/ryonakayama234/morphoacoustics-stud
 - [EXPERIMENT.md](./EXPERIMENT.md) — creator acceptance, user listening and investigation log
 
 Update these together with their Core counterparts under [Core research index](https://github.com/ryonakayama234/morphoacoustics/tree/design/cc-b1-rest-area-gate-a-20261021/docs/research/cc-b1-tract-edit). This is separate from current [CC-A2](../../cc-a2-two-body-studio.md) and **unadopted** [OG-AUD1 #20](https://github.com/ryonakayama234/morphoacoustics-studio/issues/20). SMC-1 and ASMR work are separate modules.
+
+## Core physical preview evidence (2026-10-21)
+Independent Core research [Draft PR #143](https://github.com/ryonakayama234/morphoacoustics/pull/143) now executes three **new** 48kHz/0.5s raw SI pressure streams, and separately creates common-gain WAV previews. [CI at reviewed candidate code SHA d6a84220a61b250a2c245b935a92ac097d5c5e4a](https://github.com/ryonakayama234/morphoacoustics/actions/runs/39581011629) reports success. This is **research auditory reference only**, not implemented Studio workflow or approved BodyRevision contract.
