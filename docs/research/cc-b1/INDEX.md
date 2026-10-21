@@ -10,3 +10,6 @@ Update these together with their Core counterparts under [Core research index](h
 
 ## Core physical preview evidence (2026-10-21)
 Independent Core research [Draft PR #143](https://github.com/ryonakayama234/morphoacoustics/pull/143) now executes three **new** 48kHz/0.5s raw SI pressure streams, and separately creates common-gain WAV previews. [CI at reviewed candidate code SHA d6a84220a61b250a2c245b935a92ac097d5c5e4a](https://github.com/ryonakayama234/morphoacoustics/actions/runs/39581011629) reports success. This is **research auditory reference only**, not implemented Studio workflow or approved BodyRevision contract.
+
+## 2026-10-21 creator sensory feedback -> Core post-hoc follow-up
+A single informal creator audition reported that the original three CC-B1 section0 ±10% raw-physics previews sounded indistinguishable. Core [spatial diagnostic Draft #144](https://github.com/ryonakayama234/morphoacoustics/pull/144) screened all 16 rest-area sites in Wolfram then physically reran seven 48kHz 0.5s conditions at positions0/2/4. [Physical CI and WAV evidence](https://github.com/ryonakayama234/morphoacoustics/actions/runs/39591507980/artifacts/12342252192). **No sound-quality or audibility Gate passed. Studio remains unimplemented.**
