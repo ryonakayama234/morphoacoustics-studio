@@ -32,3 +32,6 @@ body-geometry difference | source hash unchanged | waveform
 
 ## Research sound preview source (not Studio integration)
 The three standalone Core edited-body cases are now executed: `rest_area(section0) x {0.90,1.00,1.10}` with identical established three-task program and LF source. Core created raw Pa and three optional listening WAVs with **one shared playback gain** (no EQ, no post-hoc voice conversion). A Studio demo must use a **future exact-SHA trusted adapter after Core Gate A/B**, not consume research WAVs as though they were newly executed immutable Stage B Takes. Raw shape changes and audible quality remain distinct.
+
+## Why waveform physical differentiation is not creator-voice differentiation
+The creator reported inability to distinguish a section0 localized edit, even though raw pressure differed numerically. Human discernibility is an independent requirement: `BodyRevision->Gesture->physical sound` does not alone imply `audible new character`. The new Core post-hoc screening at zero-based sections2/4 adds audibility-reference files ONLY; Studio must not expose these pre-rendered samples as newly executed PerformanceResult, immutable Take, sound quality promises, or production presets. Audio quality/phonation and morphology/persona are distinct ongoing workstreams.
