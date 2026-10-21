@@ -27,3 +27,6 @@ flowchart LR
 A rejected or unaudited proposal **never** appears as an authentic new physics Take.
 
 Core [v1 contract](https://github.com/ryonakayama234/morphoacoustics/blob/main/docs/performance-contract-v1.md) supports exact **prevalidated preset IDs** only. Any new editable-body creation requires a separately versioned bridge design; don't mutate existing JSON v0/v1, trusted pin policy or old content-addressed files.
+
+## Physical research observation handoff (not PerformanceResult schema)
+Core PR #143 independently archives `pressure_0.90.npy`, `pressure_1.00.npy`, `pressure_1.10.npy`, and `preview_0.90.wav`, `preview_1.00.wav`, `preview_1.10.wav`, with exact per-file hashes, one common `comparison_shared_gain`, source/gesture hashes and limitation tags. These files are *proof-of-path research artifacts*, not mutable body preset records, published scientific acceptance, or Studio Takes. Future Studio trusted path must independently verify body revision, raw pressure bytes, WAV normalization, source identity and artifact hashes before saving any user Take. Never interpret per-file playback-normalization as a change of vocal effort.
