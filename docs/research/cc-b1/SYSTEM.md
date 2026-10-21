@@ -29,3 +29,6 @@ body-geometry difference | source hash unchanged | waveform
 - A future anatomical node/edge canvas can reference the exact semantic vocal_tract organ, but do not imply a UI line is an adopted physical acoustic junction or that the active 1D source/filter has OG-4/OG-AUD1 branched source physics.
 - Preserve adopted CC-A2/legacy X2a separate paths; use only a new adapter after Core Gate B+contract review. A/B playback normalization must not overwrite raw pressure.
 - Record what is **heard**, not just the model's numerical peaks. Creators should be able to say “distinct, but still buzzer-like,” then return to the former body.
+
+## Research sound preview source (not Studio integration)
+The three standalone Core edited-body cases are now executed: `rest_area(section0) x {0.90,1.00,1.10}` with identical established three-task program and LF source. Core created raw Pa and three optional listening WAVs with **one shared playback gain** (no EQ, no post-hoc voice conversion). A Studio demo must use a **future exact-SHA trusted adapter after Core Gate A/B**, not consume research WAVs as though they were newly executed immutable Stage B Takes. Raw shape changes and audible quality remain distinct.
