@@ -8,6 +8,7 @@ on:
       - "src/app.css"
       - "vite.config.ts"
       - "package.json"
+      - ".gitignore"
       - "docs/research/cc-b1-private-atelier/**"
       - ".github/workflows/cc-b1-private-atelier.yml"
   workflow_dispatch:
