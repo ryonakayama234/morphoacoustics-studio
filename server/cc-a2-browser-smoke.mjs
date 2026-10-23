@@ -87,6 +87,30 @@ try {
   });
   assert.ok(played.duration >= 0.49 && played.duration <= 0.51);
   assert.ok(played.time > 0);
+  // VA-L0: new exploratory listening UI consumes only the real archived physical Takes.
+  const atlas = section.locator('.voice-audition');
+  await atlas.getByRole('button', { name: '同一WAV対照を聴く' }).click();
+  assert.equal(await section.locator('.take-card:visible').count(), 0);
+  const controls = await atlas.locator('audio').evaluateAll(items => items.map(x => x.getAttribute('src')));
+  assert.equal(controls.length, 2);
+  assert.equal(controls[0], controls[1], 'A/A must reference exactly the same real WAV');
+  await atlas.getByLabel('音の違いの印象').selectOption('none');
+  await atlas.getByRole('button', { name: '評価を記録して割付を見る' }).click();
+  assert.match(await atlas.innerText(), /同一音対照の「差あり」回答：0\/1/);
+  await atlas.getByRole('button', { name: '選択中の2身体をラベルなしで聴く' }).click();
+  assert.equal(await section.locator('.compare-card:visible').count(), 2);
+  const contrast = await atlas.locator('audio').evaluateAll(items => items.map(x => x.getAttribute('src')));
+  assert.notEqual(contrast[0], contrast[1], 'different physical body Takes must retain distinct WAV refs');
+  await atlas.getByLabel('音の違いの印象').selectOption('uncertain');
+  await atlas.getByRole('button', { name: '評価を記録して割付を見る' }).click();
+  assert.match(await atlas.innerText(), /2 件の記録/);
+  const persisted = await page.evaluate(() => localStorage.getItem('morphoacoustics-studio:voice-audition/v0'));
+  const notebook = JSON.parse(persisted);
+  assert.equal(notebook.length, 2);
+  assert.equal(notebook[0].first.audio_ref, notebook[0].second.audio_ref);
+  assert.notEqual(notebook[1].first.audio_ref, notebook[1].second.audio_ref);
+  assert.ok(notebook.every(x => x.first.input_digest && x.second.preparation_digest));
+
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.getByRole('button', { name: 'CC-A2 · 2身体の比較実験を開く／閉じる' }).click();
   await section.locator('.take-card').nth(1).waitFor({timeout:15000});

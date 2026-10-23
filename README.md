@@ -22,3 +22,8 @@ npm run dev
 ```
 
 PR #1 intentionally implements only the contract/bootstrap vertical slice. Real synthesis and creator workflow UI come later.
+
+
+## Voice Atlas — exploratory listening notebook (VA-L0)
+
+The CC-A2 two-body creator panel now has a **candidate** label-masked physical Take A/B audition and same-audio A/A control. It collects separate subjective difference, voice-likeness, artifact, and creator-note observations, with frozen Core Take provenance in exportable local JSON. It does **not** synthesize or modify audio, or establish naturalness. See [VA-L0 INDEX](docs/research/voice-audition-v0/INDEX.md), [SYSTEM](docs/research/voice-audition-v0/SYSTEM.md), [DATA](docs/research/voice-audition-v0/DATA.md), and [EXPERIMENT](docs/research/voice-audition-v0/EXPERIMENT.md). This capability remains a draft until CI and actual listening acceptance.
