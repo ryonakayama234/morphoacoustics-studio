@@ -1,0 +1,97 @@
+name: cc-b1-private-body-atelier
+on:
+  pull_request:
+    paths:
+      - "server/cc-b1-*"
+      - "src/ccB1/**"
+      - "src/App.tsx"
+      - "src/app.css"
+      - "vite.config.ts"
+      - "package.json"
+      - "docs/research/cc-b1-private-atelier/**"
+      - ".github/workflows/cc-b1-private-atelier.yml"
+  workflow_dispatch:
+jobs:
+  real-local-paired-physics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: ryonakayama234/morphoacoustics
+          ref: ef23738e1e6e3c631de5e36912bf5b601c7a17b3
+          path: core
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.16.0"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install Studio and fixed Core exact numerical dependencies
+        run: |
+          npm install --global npm@11.6.0
+          npm install --no-audit --no-fund
+          python -m pip install -e "core[dev]"
+          python -m pip install "numpy==2.4.6"
+          python -c "import numpy; assert numpy.__version__=='2.4.6'"
+      - name: Studio build, unit and refusal-policy checks
+        run: |
+          npm run build
+          npm test
+          node --test server/cc-b1-local.policy.mjs
+          node --test server/cc-a2-server.policy.mjs
+      - name: Two real fresh Core site08 paired physical waveforms and immutable local reload
+        env:
+          MORPHO_CC_B1_CORE_DIR: ${{ github.workspace }}/core
+          MORPHO_CC_B1_DATA_DIR: ${{ runner.temp }}/cc-b1-private-data
+          MORPHO_CC_B1_PYTHON: python
+        run: |
+          set -e
+          node server/cc-b1-local.mjs > cc-b1-server.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" || true' EXIT
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8767/cc-b1/health >/dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8767/cc-b1/health
+          node server/cc-b1-smoke.mjs
+          kill "$PID" || true
+          wait "$PID" || true
+          node server/cc-b1-local.mjs > cc-b1-restart.log 2>&1 &
+          PID=$!
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8767/cc-b1/health >/dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          node --input-type=module -e '
+            import assert from "node:assert/strict";
+            const r=await fetch("http://127.0.0.1:8767/cc-b1/takes");
+            assert.equal(r.status,200);
+            const t=await r.json();assert.equal(t.length,2);
+            assert.deepEqual(new Set(t.map(x=>x.ratio)),new Set(["0.90","1.10"]));
+            for(const x of t){
+              const wav=await fetch("http://127.0.0.1:8767"+x.audio.edited);
+              assert.equal(wav.status,200);
+              assert.equal((await wav.arrayBuffer()).byteLength,48044);
+            }
+            console.log("CC-B1 private Studio restart+real physical A/B PASS");
+          '
+      - name: Archive original Core pressure/WAV/trace, creator snapshots and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cc-b1-private-creator-physical-evidence
+          path: |
+            cc-b1-*.wav
+            cc-b1-smoke.json
+            cc-b1-server.log
+            cc-b1-restart.log
+            ${{ runner.temp }}/cc-b1-private-data/runs/*/studio-pair.json
+            ${{ runner.temp }}/cc-b1-private-data/runs/*/physical/*.npy
+            ${{ runner.temp }}/cc-b1-private-data/runs/*/physical/*.wav
+            ${{ runner.temp }}/cc-b1-private-data/runs/*/physical/*.csv
+            ${{ runner.temp }}/cc-b1-private-data/runs/*/physical/result.json
+            ${{ runner.temp }}/cc-b1-private-data/registry/revisions/*.json
+          if-no-files-found: warn
