@@ -78,6 +78,17 @@ jobs:
             }
             console.log("CC-B1 private Studio restart+real physical A/B PASS");
           '
+      - name: Install CI-only Chromium for creator UI
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Browser real Body Atelier edit, playable pair and page/server restart
+        env:
+          MORPHO_CC_B1_CORE_DIR: ${{ github.workspace }}/core
+          MORPHO_CC_B1_DATA_DIR: ${{ runner.temp }}/cc-b1-browser-data
+          MORPHO_CC_B1_PYTHON: python
+          CC_B1_BROWSER_DATA_DIR: ${{ runner.temp }}/cc-b1-browser-data
+        run: node server/cc-b1-browser-smoke.mjs
       - name: Archive original Core pressure/WAV/trace, creator snapshots and logs
         if: always()
         uses: actions/upload-artifact@v4
@@ -88,6 +99,10 @@ jobs:
             cc-b1-smoke.json
             cc-b1-server.log
             cc-b1-restart.log
+            ${{ runner.temp }}/cc-b1-browser-data/cc-b1-browser.png
+            ${{ runner.temp }}/cc-b1-browser-data/*.log
+            ${{ runner.temp }}/cc-b1-browser-data/runs/*/physical/*.wav
+            ${{ runner.temp }}/cc-b1-browser-data/runs/*/studio-pair.json
             ${{ runner.temp }}/cc-b1-private-data/runs/*/studio-pair.json
             ${{ runner.temp }}/cc-b1-private-data/runs/*/physical/*.npy
             ${{ runner.temp }}/cc-b1-private-data/runs/*/physical/*.wav
