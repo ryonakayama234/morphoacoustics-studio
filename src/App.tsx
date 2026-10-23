@@ -1,4 +1,5 @@
 import { CCAtelier } from './ccA2/CCAtelier';
+import { CCB1Atelier } from './ccB1/CCB1Atelier';
 import { useEffect, useMemo, useState } from 'react';
 import mioRequest from '../vendor/performance-contract/v0/examples/request.json';
 import upstream from '../vendor/performance-contract/UPSTREAM.json';
@@ -354,6 +355,7 @@ export default function App() {
   const selectedB = takes.find((take) => take.result.take_id === comparison.b);
 
   const [ccA2Open, setCcA2Open] = useState(false);
+  const [ccB1Open, setCcB1Open] = useState(false);
 
   return (
     <main className="studio-shell">
@@ -558,6 +560,14 @@ export default function App() {
           <TakeComparison label="A" take={selectedA} />
           <TakeComparison label="B" take={selectedB} />
         </div>
+      </section>
+
+      <section className="panel" aria-label="CC-B1身体編集実験入口">
+        <button type="button" className="secondary" aria-expanded={ccB1Open}
+          onClick={() => setCcB1Open((open) => !open)}>
+          CC-B1 · 身体の断面積を変えて声を聴く（ローカル実験）
+        </button>
+        {ccB1Open && <CCB1Atelier />}
       </section>
 
       <section className="panel" aria-label="CC-A2身体比較入口">
