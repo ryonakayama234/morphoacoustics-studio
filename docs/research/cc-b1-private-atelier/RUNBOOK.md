@@ -1,6 +1,6 @@
 # CC-B1 private Atelier — WSL2/Linux runbook
 
-Status: opt-in **Draft** research UI, not merged/adopted. Intended for a single trusted creator on their PC. Core physical SHA must be exact. No public service, cloud auth, signer PKI or anthropomorphic/natural speech claims.
+Status: opt-in **GO_LOCAL_CREATOR_PROTOTYPE** (owner-delegated engineering decision; integration state tracked by Studio PR #27). Not a public API, deployed service, or general speech capability. Intended for a single trusted creator on their PC. Core physical SHA must be exact. No public service, cloud auth, signer PKI or anthropomorphic/natural speech claims.
 
 ## Installation
 
