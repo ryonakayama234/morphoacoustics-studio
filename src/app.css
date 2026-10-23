@@ -166,3 +166,17 @@ dd { margin: 4px 0 0; font-size: 0.76rem; overflow-wrap: anywhere; }
   .control-grid, .comparison-grid, .take-meta { grid-template-columns: 1fr; }
   .primary { width: 100%; }
 }
+
+/* CC-B1's physically bounded segment diagram, not measured 3D anatomy. */
+.cc-b1-segments { display: grid; grid-template-columns: repeat(16,minmax(0,1fr)); gap: 3px; margin-top: 20px; }
+.cc-b1-segments span { min-width: 0; display: grid; place-items: center; height: 37px;
+  font-size: 0.72rem; border: 1px solid rgba(25,24,23,.15); border-radius: 5px; }
+.cc-b1-segments .cc-b1-segment-active { color: #fff; background: #191817; border-color: #191817; font-weight: 800; }
+.cc-b1-provenance { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 360px; overflow: auto;
+  font-size: .74rem; padding: 12px; background: #eee9e1; border-radius: 9px; }
+.cc-b1-workshop .take-list { margin: 16px 0; }
+.cc-b1-workshop audio { width: 100%; max-width: 100%; }
+.cc-b1-workshop select { max-width: 450px; }
+@media (max-width: 680px) {
+  .cc-b1-segments { grid-template-columns: repeat(8,minmax(0,1fr)); }
+}
