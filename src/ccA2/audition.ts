@@ -36,7 +36,7 @@ export type AuditionTrial = {
   second: FrozenTake;
 };
 
-export type AuditionRecord = AuditionTrial & {
+export type AuditionRecord = Omit<AuditionTrial, 'schema_version'> & {
   schema_version: 'voice-audition-record/v0';
   completed_at: string;
   assessment: {
