@@ -40,3 +40,18 @@ Existing tested physics source: adopted CC-A2 bridge (see its separately pinned 
 ## After CI/creator listening
 
 Append exact branch SHA, GitHub Actions run link, Vitest/build results, actual JSON observations and limitations. Until then, all test and subjective evidence is pending. If the prototype works, propose a narrowly scoped optional Studio feature merge without falsely adopting new Core physics.
+
+## 2026-10-23 post-implementation evidence — engineering only
+
+**Tested code HEAD:** `4cbe3b6116cb4341841423153d3e2a7008a3b189`. All four latest-head workflows completed successfully:
+
+| Workflow | Result | Exact code-head evidence |
+| --- | --- | --- |
+| Studio CI (Vitest, Node bridge tests, TypeScript build) | **PASS** | [39927450512](https://github.com/ryonakayama234/morphoacoustics-studio/actions/runs/39927450512) |
+| CC-A2 live two-body Core→Chromium E2E | **PASS** | [39927450521](https://github.com/ryonakayama234/morphoacoustics-studio/actions/runs/39927450521) |
+| X2a older real-physics Studio regression | **PASS** | [39927450563](https://github.com/ryonakayama234/morphoacoustics-studio/actions/runs/39927450563) |
+| CC-B1 private local paired-physics regression | **PASS** | [39927450569](https://github.com/ryonakayama234/morphoacoustics-studio/actions/runs/39927450569) |
+
+The CC-A2 browser E2E now asserts: two newly generated physical Takes from distinct frozen bodies; valid archived WAV checksum and playback; A/A identical `audio_ref` twice; hidden original Take panels during a trial; A/B differing real Take refs; subjective record saves with source digests; localStorage records with both trials; existing reload/server-restart path still succeeds. [E2E real WAV + browser evidence artifact](https://github.com/ryonakayama234/morphoacoustics-studio/actions/runs/39927450521/artifacts/12490446142).
+
+This evidence establishes **software operation and existing Core path preservation, not perceptual improvement or human validation**. The same-head run checked no new hearing judgments: human results = **NOT TESTED**, independent blinded discrimination = **NOT TESTED**, voice-likeness = **NOT TESTED**, physical sound-model upgrade = **NOT APPLICABLE**. The next gate remains creator listening, preferably with an independent multiple-exemplar protocol under Core [D1 #37](https://github.com/ryonakayama234/morphoacoustics/issues/37). Do not infer that the synthetic vowels became voice-like.
