@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { createElement } from 'react';
 import registry from '../../docs/product/workspace-v2/PANEL_REGISTRY.json';
 import { WORKSPACE_MODES, WORKSPACE_REGIONS, WorkspacePreview } from './WorkspacePreview';
 
@@ -19,7 +20,7 @@ describe('Workspace V2 panel and data ownership constitution', () => {
     expect(centers.map(x => x.mode)).toEqual(['character','motion','scene']);
   });
   it('does not append independent experiment panels or fake a completed organ graph', () => {
-    const html = renderToStaticMarkup(<WorkspacePreview/>);
+    const html = renderToStaticMarkup(createElement(WorkspacePreview));
     expect((html.match(/data-region="center"/g)||[]).length).toBe(1);
     expect((html.match(/data-region="right"/g)||[]).length).toBe(1);
     expect((html.match(/data-region="bottom"/g)||[]).length).toBe(1);
