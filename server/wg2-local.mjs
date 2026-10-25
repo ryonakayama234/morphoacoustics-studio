@@ -18,6 +18,12 @@ export const BODY = Object.freeze({
   'v3b-axial-M0': { length_m: 0.16, clock_hz: 68600 },
   'v3b-axial-M1': { length_m: 0.176, clock_hz: 343 * 2 / 0.011 },
 });
+// Frozen exact CC-A2 prepared registry evidence independently replayed in Core PR #193
+// real WAV/NPY CI run 40181810529, M0/M1 source provenance.
+export const PREPARED_DIGESTS = Object.freeze({
+  'v3b-axial-M0': 'sha256:a98d484f8740bf40a419ac117a2deb41ab659dea095577874455aec0713258de',
+  'v3b-axial-M1': 'sha256:d2ec9d17ca1f9c9bdd4f01a68c1c65d3e2c4fa39a84ccd0bf0774755afae6cea',
+});
 export const REQUIRED_ARTIFACTS = Object.freeze([
   'source_flow_48k.npy', 'mouth_pressure_native_pa.npy',
   'mouth_flow_native_m3_s.npy', 'mouth_pressure_monitor_48k_pa.npy', 'audio.wav',
@@ -98,7 +104,7 @@ export function checkManifest(manifest, request, buffers, pinned = CORE_SHA) {
       || manifest.body?.preset_id !== request.preset_id
       || manifest.body?.revision !== request.revision
       || !closeEnough(manifest.body?.length_m, b.length_m)
-      || !/^sha256:[a-f0-9]{64}$/.test(manifest.body?.preparation_digest ?? '')
+      || manifest.body?.preparation_digest !== PREPARED_DIGESTS[request.preset_id]
       || manifest.source?.id !== 'sv1-prescribed-100hz-lf-rd1'
       || manifest.source?.role !== 'externally-prescribed-volume-flow'
       || manifest.source?.duration_s !== request.duration_s
@@ -144,19 +150,37 @@ function checkedCore() {
   assertNoIgnoredToolExecutables(CORE);
 }
 
-async function safeFile(dir, name) {
-  const stat = await fs.lstat(path.join(dir, name));
-  if (!stat.isFile() || stat.isSymbolicLink() || stat.size < 40 || stat.size > 3_000_000) {
-    throw new Error('WG2_INVALID_FILE_OR_SYMLINK: ' + name);
+export async function safeFile(dir, name, root = DATA) {
+  // Linux/WSL2: fd-relative /proc/self/fd traversal pins each ancestor
+  // against symlink swaps. O_NOFOLLOW only at leaf is insufficient.
+  if (typeof name !== 'string' || !/^[A-Za-z0-9_.-]{1,64}$/.test(name)) {
+    throw new Error('WG2_INVALID_ARTIFACT_NAME');
   }
-  const handle = await fs.open(path.join(dir, name), fileFlags.O_RDONLY | fileFlags.O_NOFOLLOW);
+  const relative = path.relative(root, dir);
+  const parts = relative === '' ? [] : relative.split(path.sep);
+  if (parts.some(p => p === '..' || !/^[A-Za-z0-9_.-]{1,64}$/.test(p))) {
+    throw new Error('WG2_PATH_OUTSIDE_PRIVATE_ROOT');
+  }
+  const opened = [];
   try {
-    const actual = await handle.stat();
-    if (!actual.isFile() || actual.ino !== stat.ino || actual.dev !== stat.dev) {
-      throw new Error('WG2_FILE_SWAPPED');
+    let current = await fs.open(root, fileFlags.O_RDONLY | fileFlags.O_DIRECTORY | fileFlags.O_NOFOLLOW);
+    opened.push(current);
+    for (const part of parts) {
+      current = await fs.open('/proc/self/fd/' + current.fd + '/' + part,
+        fileFlags.O_RDONLY | fileFlags.O_DIRECTORY | fileFlags.O_NOFOLLOW);
+      opened.push(current);
     }
-    return await handle.readFile();
-  } finally { await handle.close(); }
+    const leaf = await fs.open('/proc/self/fd/' + current.fd + '/' + name,
+      fileFlags.O_RDONLY | fileFlags.O_NOFOLLOW);
+    opened.push(leaf);
+    const stat = await leaf.stat();
+    if (!stat.isFile() || stat.size < 40 || stat.size > 3_000_000) {
+      throw new Error('WG2_INVALID_FILE_OR_SYMLINK: ' + name);
+    }
+    return await leaf.readFile();
+  } finally {
+    for (const fd of opened.reverse()) await fd.close();
+  }
 }
 
 async function physicalFiles(dir) {
@@ -357,8 +381,8 @@ export async function startServer() {
     server.close();
     if (activeChild && activeChild.exitCode === null) activeChild.kill('SIGTERM');
   };
-  server.once('SIGINT', stop);
-  server.once('SIGTERM', stop);
+  process.once('SIGINT', stop);
+  process.once('SIGTERM', stop);
   server.listen(PORT, '127.0.0.1', () =>
     console.log('WG2 creator physical preview on 127.0.0.1:' + PORT));
   return server;
