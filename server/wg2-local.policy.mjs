@@ -1,9 +1,12 @@
 import assert from 'node:assert/strict';
+import { promises as fs } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { createHash } from 'node:crypto';
 import test from 'node:test';
 import {
   checkRequest, checkManifest, checkWav, checkNpyF64, BODY, CORE_SHA, PHYSICS_VERSION,
-  REQUIRED_ARTIFACTS,
+  REQUIRED_ARTIFACTS, PREPARED_DIGESTS, safeFile,
 } from './wg2-local.mjs';
 
 const hash = b => createHash('sha256').update(b).digest('hex');
@@ -46,7 +49,7 @@ function fixture(preset_id = 'v3b-axial-M0') {
     task:'static-/a/-like-sustained-vowel', is_calibrated_microphone:false,
     physical_walls:'fixed',
     body:{ character_id: request.character_id, preset_id, revision:1,
-      length_m:body.length_m, preparation_digest:'sha256:' + 'f'.repeat(64) },
+      length_m:body.length_m, preparation_digest:PREPARED_DIGESTS[preset_id] },
     source:{ id:'sv1-prescribed-100hz-lf-rd1', role:'externally-prescribed-volume-flow',
       duration_s:0.25, sha256_f64:arrays['source_flow_48k.npy'].f64sha },
     observer: {
@@ -89,6 +92,7 @@ test('forged physical identity or acoustic evidence always refused', () => {
     {...manifest, source:{...manifest.source,id:'fake'}},
     {...manifest, body:{...manifest.body, preset_id:'v3b-axial-M1'}},
     {...manifest, body:{...manifest.body, revision:2}},
+    {...manifest, body:{...manifest.body, preparation_digest:'sha256:' + 'f'.repeat(64)}},
     {...manifest, observer:{...manifest.observer, physics_clock_hz:1000}},
     {...manifest, observer:{...manifest.observer, physical_pressure_sha256:'0'.repeat(64)}},
     {...manifest, is_calibrated_microphone:true},
@@ -104,4 +108,35 @@ test('forged physical identity or acoustic evidence always refused', () => {
   const brokenWav = Buffer.from(files['audio.wav']);
   brokenWav.writeUInt32LE(44100,24);
   assert.throws(()=>checkWav(brokenWav,12000),/FORGED/);
+});
+
+
+test('directory ancestor swap to symlink cannot redirect completed Take reads', async () => {
+  const root = await fs.mkdtemp(path.join(os.tmpdir(), 'wg2-no-follow-'));
+  const elsewhere = await fs.mkdtemp(path.join(os.tmpdir(), 'wg2-target-'));
+  try {
+    const id = 'ab2d3f41-aaaa-4bbb-9ccc-1234567890ab';
+    const run = path.join(root, 'runs', id);
+    await fs.mkdir(run, { recursive:true });
+    await fs.mkdir(path.join(run, 'physical'));
+    await fs.writeFile(path.join(run, 'physical', 'manifest.json'),
+      Buffer.from('sufficient body of an otherwise legitimate physical manifest'));
+    assert.ok((await safeFile(path.join(run,'physical'),'manifest.json',root)).length > 40);
+    await fs.rename(path.join(run,'physical'),path.join(run,'physical-moved'));
+    await fs.symlink(elsewhere,path.join(run,'physical'),'dir');
+    await fs.writeFile(path.join(elsewhere,'manifest.json'),Buffer.from('evil replacement content with enough bytes to pass size'));
+    await assert.rejects(
+      () => safeFile(path.join(run,'physical'),'manifest.json',root),
+      /ELOOP|ENOTDIR|WG2_INVALID/
+    );
+    await fs.rename(run,path.join(root,'original-run'));
+    await fs.symlink(path.join(root,'original-run'),run,'dir');
+    await assert.rejects(
+      () => safeFile(path.join(run,'physical-moved'),'manifest.json',root),
+      /ELOOP|ENOTDIR|WG2_INVALID/
+    );
+  } finally {
+    await fs.rm(root,{recursive:true,force:true});
+    await fs.rm(elsewhere,{recursive:true,force:true});
+  }
 });
