@@ -13,7 +13,15 @@ describe('Workspace V2 panel and data ownership constitution', () => {
       'mode-switcher','project-assets','primary-editor','selection-inspector','take-transport','research-drawer',
     ].sort());
     const ids = registry.slots.map(slot => slot.id);
+    // A new panel/root region requires an explicit product architecture revision.
+    expect(ids).toEqual([
+      'global.header','project.library','character.canvas','motion.canvas',
+      'scene.canvas','selection.inspector','take.transport','research.drawer',
+    ]);
     expect(new Set(ids).size).toBe(ids.length);
+    expect(registry.slots.map(slot => slot.region)).toEqual([
+      'header','left','center','center','center','right','bottom','diagnostics',
+    ]);
     const owners = registry.slots.map(slot => slot.owner);
     expect(owners.every(owner => !!owner)).toBe(true);
     const centers = registry.slots.filter(slot => slot.region === 'center');
