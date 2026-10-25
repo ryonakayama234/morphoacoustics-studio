@@ -1,5 +1,6 @@
 import { CCAtelier } from './ccA2/CCAtelier';
 import { CCB1Atelier } from './ccB1/CCB1Atelier';
+import { WG2Atelier } from './wg2/WG2Atelier';
 import { useEffect, useMemo, useState } from 'react';
 import mioRequest from '../vendor/performance-contract/v0/examples/request.json';
 import upstream from '../vendor/performance-contract/UPSTREAM.json';
@@ -356,6 +357,7 @@ export default function App() {
 
   const [ccA2Open, setCcA2Open] = useState(false);
   const [ccB1Open, setCcB1Open] = useState(false);
+  const [wg2Open, setWg2Open] = useState(false);
 
   return (
     <main className="studio-shell">
@@ -560,6 +562,14 @@ export default function App() {
           <TakeComparison label="A" take={selectedA} />
           <TakeComparison label="B" take={selectedB} />
         </div>
+      </section>
+
+      <section className="panel" aria-label="WG2新しい物理Waveguide発声入口">
+        <button type="button" className="secondary" aria-expanded={wg2Open}
+          onClick={() => setWg2Open((open) => !open)}>
+          WG2 · 身体固有の波動伝播から声を新規計算して聴く（ローカル実験）
+        </button>
+        {wg2Open && <WG2Atelier draft={draft} />}
       </section>
 
       <section className="panel" aria-label="CC-B1身体編集実験入口">
