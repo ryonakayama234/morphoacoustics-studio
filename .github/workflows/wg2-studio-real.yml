@@ -1,0 +1,104 @@
+name: wg2-studio-real-creator
+
+on:
+  pull_request:
+    paths:
+      - "server/wg2-*"
+      - "src/wg2/**"
+      - "src/App.tsx"
+      - "vite.config.ts"
+      - "package.json"
+      - ".gitignore"
+      - "docs/research/wg2-studio-creator/**"
+      - ".github/workflows/wg2-studio-real.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  real-native-waveguide-studio:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: ryonakayama234/morphoacoustics
+          ref: d47acca22fee0bea3f88be60c9d4cbc99c3fd514
+          path: core
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.16.0"
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.11"
+      - name: Install Studio and frozen exact scientific dependencies
+        run: |
+          npm install --global npm@11.6.0
+          npm install --no-audit --no-fund
+          python -m pip install --only-binary=:all: --require-hashes -r core/requirements/sv1-physical-py311.lock.txt
+          python -m pip install --no-deps --no-build-isolation -e ./core
+          python -m pip check
+      - name: Studio TypeScript build and standalone policy controls
+        run: |
+          npm run build
+          npm test
+          node --test server/wg2-local.policy.mjs
+          node --test server/cc-b1-local.policy.mjs
+      - name: Real M0/M1 Native Core physics via Node and HTTP plus immutable Take storage
+        env:
+          MORPHO_WG2_CORE_DIR: ${{ github.workspace }}/core
+          MORPHO_WG2_DATA_DIR: ${{ runner.temp }}/wg2-studio-research-data
+          MORPHO_WG2_PYTHON: python
+        run: |
+          set -e
+          node server/wg2-local.mjs > wg2-server.log 2>&1 &
+          PID=$!
+          trap 'kill "$PID" || true' EXIT
+          for i in $(seq 1 70); do
+            if curl -fsS http://127.0.0.1:8768/wg2/health >/dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8768/wg2/health
+          node server/wg2-smoke.mjs
+          kill "$PID" || true
+          wait "$PID" || true
+          node server/wg2-local.mjs > wg2-restart.log 2>&1 &
+          PID=$!
+          for i in $(seq 1 70); do
+            if curl -fsS http://127.0.0.1:8768/wg2/health >/dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          node --input-type=module -e '
+            import assert from "node:assert/strict";
+            const root="http://127.0.0.1:8768";
+            const r=await fetch(root+"/wg2/takes");
+            assert.equal(r.status,200);
+            const takes=await r.json();
+            assert.equal(takes.length,2);
+            assert.deepEqual(new Set(takes.map(t=>t.body.preset_id)),
+              new Set(["v3b-axial-M0","v3b-axial-M1"]));
+            for(const take of takes){
+              const wav=await fetch(root+take.audio_ref);
+              assert.equal(wav.status,200);
+              assert.equal((await wav.arrayBuffer()).byteLength,24044);
+            }
+            console.log("WG2 persisted physical audio after server restart PASS");
+          '
+      - name: Upload real physics and provenance bundles
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: wg2-studio-creator-real-audition
+          path: |
+            wg2-M0.wav
+            wg2-M1.wav
+            wg2-http-smoke.json
+            wg2-server.log
+            wg2-restart.log
+            ${{ runner.temp }}/wg2-studio-research-data/runs/*/physical/manifest.json
+            ${{ runner.temp }}/wg2-studio-research-data/runs/*/physical/*.npy
+            ${{ runner.temp }}/wg2-studio-research-data/runs/*/physical/*.wav
+            ${{ runner.temp }}/wg2-studio-research-data/runs/*/take.json
+          if-no-files-found: warn
