@@ -306,8 +306,9 @@ export async function startServer() {
     throw new Error('WG2_INVALID_PORT');
   }
   checkedCore();
-  await fs.mkdir(path.join(DATA, 'runs'), { recursive: true, mode: 0o700 });
+  await fs.mkdir(DATA, { recursive: true, mode: 0o700 });
   const dataStat = await fs.stat(DATA);
+  await fs.mkdir(path.join(DATA, 'runs'), { recursive: true, mode: 0o700 });
   if ((dataStat.mode & 0o077) !== 0) throw new Error('WG2_LOCAL_DATA_NOT_PRIVATE');
   let occupied = false;
   const server = createServer(async (req, res) => {
