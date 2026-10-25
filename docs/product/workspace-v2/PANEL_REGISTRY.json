@@ -1,0 +1,155 @@
+{
+  "schema_version": "studio-panel-registry/v1",
+  "product": "MORPHO Studio",
+  "modes": [
+    "character",
+    "motion",
+    "scene"
+  ],
+  "layout": {
+    "header": "mode-switcher",
+    "left": "project-assets",
+    "center": "primary-editor",
+    "right": "selection-inspector",
+    "bottom": "take-transport",
+    "diagnostics": "research-drawer"
+  },
+  "slots": [
+    {
+      "id": "global.header",
+      "region": "header",
+      "owner": "workspace",
+      "data": "ui.workspace.activeMode",
+      "allowed": [
+        "mode switch",
+        "project identity",
+        "save status"
+      ],
+      "notAllowed": [
+        "backend implementation selectors",
+        "research logs"
+      ]
+    },
+    {
+      "id": "project.library",
+      "region": "left",
+      "owner": "project",
+      "data": "ProjectDocument.assetRefs",
+      "allowed": [
+        "character refs",
+        "body refs",
+        "script refs",
+        "scene refs",
+        "take refs"
+      ],
+      "notAllowed": [
+        "duplicate owned models",
+        "backend runtime state"
+      ]
+    },
+    {
+      "id": "character.canvas",
+      "region": "center",
+      "mode": "character",
+      "owner": "character",
+      "data": "CharacterDefinition.organGraphRef",
+      "allowed": [
+        "organ nodes",
+        "typed edges",
+        "graph selection"
+      ],
+      "notAllowed": [
+        "phonation output renderer",
+        "script lines",
+        "scene transformations"
+      ]
+    },
+    {
+      "id": "motion.canvas",
+      "region": "center",
+      "mode": "motion",
+      "owner": "performance",
+      "data": "PerformanceDraft.scriptRef,PerformanceDraft.directionRef,MotionScoreRef",
+      "allowed": [
+        "script",
+        "direction",
+        "gesture timeline"
+      ],
+      "notAllowed": [
+        "organ physical topology",
+        "scene contact forces"
+      ]
+    },
+    {
+      "id": "scene.canvas",
+      "region": "center",
+      "mode": "scene",
+      "owner": "scene",
+      "data": "SceneDocument.actorRefs,sceneGraphRef",
+      "allowed": [
+        "speaker/listener instances",
+        "2D/3D stage selection"
+      ],
+      "notAllowed": [
+        "edit shared Character morphology",
+        "fake contact physics"
+      ]
+    },
+    {
+      "id": "selection.inspector",
+      "region": "right",
+      "owner": "active-domain",
+      "data": "ui.workspace.selectionRef",
+      "allowed": [
+        "selected organ properties",
+        "selected gesture",
+        "selected scene instance"
+      ],
+      "notAllowed": [
+        "independent copied entity data",
+        "unrelated research dump"
+      ]
+    },
+    {
+      "id": "take.transport",
+      "region": "bottom",
+      "owner": "takes",
+      "data": "TakeRecordRef + playback state",
+      "allowed": [
+        "play",
+        "scrub",
+        "A/B",
+        "export"
+      ],
+      "notAllowed": [
+        "backend selector",
+        "full debug trace"
+      ]
+    },
+    {
+      "id": "research.drawer",
+      "region": "diagnostics",
+      "owner": "research",
+      "data": "TakeRecord.provenance + ValidationReceipt",
+      "allowed": [
+        "physics traces",
+        "SHA",
+        "backend names",
+        "CI evidence"
+      ],
+      "notAllowed": [
+        "main-screen promo/explanatory paragraphs"
+      ]
+    }
+  ],
+  "rules": [
+    "Tabs replace the SAME center panel and contextual right inspector, never append vertically.",
+    "One source of truth per domain; UI stores IDs and selection state only.",
+    "Character node means a modeled organ, typed edge means a declared connection. Concept graph is not an executable physical topology until validated.",
+    "Any new feature must declare owning domain, data schema, existing slot and user task; absent slot means revise information architecture, not append panel.",
+    "Unavailable capabilities are disabled or explicitly scaffolded; no false button, hidden synthetic audio or claimed SMC/ASMR adoption.",
+    "All completed Takes reference exact character/body/script/direction/source/backend/scene revisions and immutable artifact receipts.",
+    "Numerical physics CI plus Codex review cannot override user listening failure. No sound-quality claims from this shell.",
+    "Neutral grayscale only in initial theme. Center spatial depth via layered lighting/shadows, high contrast focus, no decorative vivid badges."
+  ]
+}
