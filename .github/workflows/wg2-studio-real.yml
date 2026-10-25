@@ -86,6 +86,16 @@ jobs:
             }
             console.log("WG2 persisted physical audio after server restart PASS");
           '
+      - name: Install CI-only Chromium for creator UI
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Browser body M0/M1 actual physical Perform, WAV decode, page/server restart
+        env:
+          MORPHO_WG2_CORE_DIR: ${{ github.workspace }}/core
+          MORPHO_WG2_PYTHON: python
+          WG2_BROWSER_DATA_DIR: ${{ runner.temp }}/wg2-browser-data
+        run: node server/wg2-browser-smoke.mjs
       - name: Upload real physics and provenance bundles
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -97,6 +107,8 @@ jobs:
             wg2-http-smoke.json
             wg2-server.log
             wg2-restart.log
+            ${{ runner.temp }}/wg2-browser-data/wg2-browser.png
+            ${{ runner.temp }}/wg2-browser-data/*.log
             ${{ runner.temp }}/wg2-studio-research-data/runs/*/physical/manifest.json
             ${{ runner.temp }}/wg2-studio-research-data/runs/*/physical/*.npy
             ${{ runner.temp }}/wg2-studio-research-data/runs/*/physical/*.wav
