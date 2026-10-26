@@ -10,6 +10,10 @@ The authoritative creative integration contract lives in `ryonakayama234/morphoa
 
 The checked-in contract snapshot under `vendor/performance-contract/v0/` is read-only application input. `vendor/performance-contract/UPSTREAM.json` records the exact upstream commit and blob SHAs.
 
+## UX and creator-workflow context
+
+Start at [docs/ux/README.md](docs/ux/README.md) for the searchable, non-normative product-design context: creator journey, Atelier/Studio information architecture, conceptual objects, data boundaries, and open design decisions. These documents do **not** define new upstream contract fields or commit to a generated visual style.
+
 ## Development
 
 Requires Node.js 22.12+.
