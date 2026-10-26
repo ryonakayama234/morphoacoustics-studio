@@ -22,3 +22,9 @@ cc-b1-*.wav
 cc-b1-smoke.json
 cc-b1-server.log
 cc-b1-restart.log
+
+# WG2 independently pinned native-mouth-pressure physical creator Takes
+.morpho-wg2-data/
+wg2-*.wav
+wg2-*.json
+wg2-*.log

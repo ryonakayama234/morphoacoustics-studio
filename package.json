@@ -16,6 +16,8 @@
     "test:bridge": "node --test server/live-server.policy.mjs server/core-revision.policy.mjs server/raw-pressure-oracle.policy.mjs",
     "cc-a2:server": "node server/cc-a2-server.mjs",
     "cc-b1:server": "node server/cc-b1-local.mjs",
+    "wg2:server": "node server/wg2-local.mjs",
+    "test:wg2": "node --test server/wg2-local.policy.mjs",
     "test:cc-b1": "node --test server/cc-b1-local.policy.mjs"
   },
   "dependencies": {
