@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { StudioDraft } from '../studio/model';
+import { VoiceAudition } from './VoiceAudition';
 
 const PRESETS = [
   { id: 'v3b-axial-M0', revision: 1, length: '16.0 cm', label: '身体 A / 基準声道' },
@@ -88,6 +89,7 @@ export function CCAtelier({ draft }: { draft: StudioDraft }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [loaded, setLoaded] = useState(false);
+  const [auditionMasked, setAuditionMasked] = useState(false);
 
   useEffect(() => {
     let valid = true;
@@ -152,7 +154,8 @@ export function CCAtelier({ draft }: { draft: StudioDraft }) {
       </button>
       {error && <p role="alert" className="errors">{error}（WSL2でCC-A2サービス起動・Core revisionを確認）</p>}
       <p>比較する2つのTakeを選択してください。再生音量は各WAVで正規化されており、SPL比較はできません。</p>
-      <div className="take-list">
+      <VoiceAudition takeA={a} takeB={b} onMaskChange={setAuditionMasked} />
+      <div className={auditionMasked ? 'take-list voice-masked' : 'take-list'}>
         {[...takes].reverse().map((take) => (
           <article className="take-card" key={take.result.take_id}>
             <strong>{take.request.embodiment.preset_id} @ {take.request.embodiment.preset_revision}</strong>
@@ -166,7 +169,7 @@ export function CCAtelier({ draft }: { draft: StudioDraft }) {
           </article>
         ))}
       </div>
-      <div className="comparison-grid">
+      <div className={auditionMasked ? 'comparison-grid voice-masked' : 'comparison-grid'}>
         <TakePanel label="A" take={a} />
         <TakePanel label="B" take={b} />
       </div>

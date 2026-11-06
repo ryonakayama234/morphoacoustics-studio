@@ -180,3 +180,18 @@ dd { margin: 4px 0 0; font-size: 0.76rem; overflow-wrap: anywhere; }
 @media (max-width: 680px) {
   .cc-b1-segments { grid-template-columns: repeat(8,minmax(0,1fr)); }
 }
+
+
+/* VA-L0 creator listening notebook: mask visible physical labels during a trial. */
+.voice-audition { border: 1px solid rgba(25,24,23,.2); border-radius: 16px;
+  padding: 18px; margin: 22px 0; background: #fffdf9; }
+.voice-audition .panel-heading { flex-wrap: wrap; }
+.voice-audition select { max-width: 100%; padding: 9px; border-radius: 8px; }
+.voice-audition audio { max-width: 100%; width: 100%; }
+.voice-audition .take-actions { flex-wrap: wrap; margin: 12px 0; }
+.voice-audition .primary { background: #191817; color: #fff; }
+.voice-masked { display: none !important; }
+.audition-history { margin-top: 12px; display: grid; gap: 9px; }
+.audition-history details { border-top: 1px solid rgba(25,24,23,.15); padding-top: 8px; }
+.audition-history summary { cursor: pointer; }
+.audition-history p { overflow-wrap: anywhere; }
