@@ -1,0 +1,11 @@
+# WG2-STUDIO / Gate A — new physical preview Takes (precode, 2026-10-25 JST)
+
+Purpose: connect Core's source-pinned WG2 prepared M0/M1 **static /a/-like prescribed LF** audio to Studio as new creator-comparable, persistent physical Takes. Core candidate [PR #193](https://github.com/ryonakayama234/morphoacoustics/pull/193) on reviewed predecessor Core main merge `2b747b8e54cd302b8693f9d013f3980273bae080`, and Studio [Issue #30](https://github.com/ryonakayama234/morphoacoustics-studio/issues/30).
+
+- No old CC-A2 v1 or CC-B1 server changes, no repin of their historical Core SHAs, no v0 Take migration, no broad Script or Direction capability.
+- Expose separate `/wg2` localhost 127.0.0.1:8768, with strict origin/host/request size/body validation. One worker, subprocess no shell, exact Core reviewed Git HEAD and clean source verification pre/post work. Pin code source at exact PR/head once fully reviewed; don't silently use latest.
+- Valid controls: exact stable `character_id`, one of M0/M1 rev1, duration 0.25/0.50s, one supported fixed source-task; no text-to-speech promise. Reject other inputs without emitting audio or saved Take.
+- Run fresh Core tool with reviewed prepared body + inherited prescribed SV1 LF and WG2 physical observer; review **manifest and bytes** independently in Node. Save source/native mouth pressure/native flow/48k pressure/WAV hashes and Core SHA; only after verification write atomic immutable `take.json` marker. Reload and audio GET MUST independently reverify physical artifacts and source provenance, including exact body and origin.
+- Fixed 8-Pa playback full-scale, explicit no calibrated microphone, 48k mono PCM16, body clock 68.6/62.36kHz. Studio UI must display these limitations; no free Direction/pitch/gain controls. Existing legacy Takes untouched.
+- Review red controls: forged/mismatched body/revision/source/observer hash, wrong WAV header/frame count, corrupted NPY array, incomplete marker, core drift, symlinked output, replayed/stale audio must fail. Two *new* M0/M1 requests, result A/B distinct raw hashes and body provenance, page reload/server restart retrieval.
+- Dedicated actual GitHub Actions real Core/Node/TypeScript+browser CI and `@codex review` are separate and required before any main merge. Voice-likeness judged by human listening N=1, not inferred from numerical or A/B distinction.
