@@ -1,0 +1,43 @@
+# Machine-searchable documentation discovery index, not a production schema or runtime config.
+# Stable topic IDs and workspace/zone names are navigational context, not public API names.
+version: ux-context/v0
+last_reviewed: "2026-10-16"
+authority: "non-normative; upstream performance contract and implemented source prevail"
+status: proposal
+product: morphoacoustics-studio
+purpose: "Design embodied characters, author performances, render supported Takes, compare outcomes"
+documents:
+  home: docs/ux/README.md
+  journey: docs/ux/experience-map.md
+  workspaces: docs/ux/workspaces.md
+  data: docs/ux/data-concepts.md
+  decisions: docs/ux/decisions.md
+workspaces:
+  - id: atelier
+    name: "Character Atelier / 工房"
+    status: proposed
+    layout_zones: [entity_navigation, anatomy_viewport, contextual_inspector, audition_strip]
+    concepts: [Character, Morphology, Material, MotorPersona]
+    keywords: [character-create, anatomy, body, material, audition, alchemy]
+  - id: performance_studio
+    name: "Performance Studio / 収録・演技"
+    status: proposed
+    layout_zones: [script_and_direction, spatial_stage, contextual_inspector, shared_timeline, take_dock]
+    concepts: [Script, Direction, StageScene, ActorInstance, Receiver, Gesture, Take]
+    keywords: [script, direction, speaker, listener, microphone, ASMR, motion, waveform, compare]
+concepts:
+  current: [CharacterSpecV0, ScriptV0, DirectionV0, PerformanceRequestV0, PerformanceResultV0, TakeRecord]
+  future: [Project, CharacterDesign, StageScene, ActorInstance, Receiver, PoseTrajectory, GestureAuthoring, ObservationLane]
+source_of_truth:
+  upstream: "ryonakayama234/morphoacoustics:contracts/performance/v0/"
+  contract_snapshot: "vendor/performance-contract/v0/"
+  upstream_pin: "vendor/performance-contract/UPSTREAM.json"
+  current_draft: "src/studio/model.ts"
+  backend_boundary: "src/backend/PerformanceBackend.ts"
+  take_storage: "src/performance/TakeStore.ts"
+  known_scope_limit: "docs/x1b-dynamic-performance.md"
+excluded_from_canon:
+  - "Figma visual mockups"
+  - "generated illustration"
+  - "fixed palette, fonts, or component styling"
+  - "unsupported spatial or anatomy API fields"
