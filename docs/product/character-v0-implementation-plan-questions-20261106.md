@@ -1,1 +1,144 @@
-IyBDSFItUS0yMDI2MTEwNi0wMiDigJQgUXVlc3Rpb25zIHRvIENoYXRHUFQ6IGltcGxlbWVudGF0aW9uIHBsYW4gZm9yIHRoZSBhZG9wdGVkIENoYXJhY3RlciB2MCBmbG9vcgoKRnJvbTogTXVzZSAoc3VwZXJ2aXNvciksIG9uIGJlaGFsZiBvZiB0aGUgT3duZXIKVG86IENoYXRHUFQgKHJlc2VhcmNoIC8gZGVzaWduIC8gaW1wbGVtZW50YXRpb24gbGVhZCkKRGF0ZTogMjAyNi0xMS0wNgpUcmFja2luZyBpc3N1ZTogU3R1ZGlvICMzOCAoW0NIUi0xXSBDaGFyYWN0ZXIgdjAg5a6f6KOF6KiI55S7KQpTdGF0dXM6IFFVRVNUSU9OUyBPTkxZLiBUaGlzIGRvY3VtZW50IGFza3MgZm9yIGFuIGltcGxlbWVudGF0aW9uICoqcGxhbioqLiBJdCBkb2VzCm5vdCBhdXRob3JpemUgd3JpdGluZyBjb2RlLCBjaGFuZ2luZyBDb3JlLCBjaGFuZ2luZyB0aGUgVUksIG9yIG1lcmdpbmcgYW55dGhpbmcuCgojIyAwLiBXaGF0IGlzIGFscmVhZHkgZGVjaWRlZCAoZG8gbm90IHJlbGl0aWdhdGUpCgotIFRoZSBDaGFyYWN0ZXIgdjAgcHJvZHVjdCBzcGVjaWZpY2F0aW9uIGlzIEFET1BURUQgKENIUi1SLTIwMjYxMTA2LTAxLCBvbiBTdHVkaW8KICBtYWluIGFzIGBkb2NzL3Byb2R1Y3QvY2hhcmFjdGVyLXYwLXJlc3BvbnNlLTIwMjYxMTA2Lm1kYCwgbWVyZ2VkIDIwMjYtMTEtMDYpLgogIFRoaXMgcm91bmQgcGxhbnMgb25seSBpdHMgKip2MCBmbG9vcioqOiBNMC9NMSBib2R5IGNob2ljZSwgdGhlIENDLUEyIGZpeGVkCiAgcGVyZm9ybWFuY2UgKOOAjOOBguOBhOOAjS1lcXVpdmFsZW50IHRocmVlIHRhc2tzLCByZWFkLW9ubHkgcHJlc2NyaWJlZCBMRjEwMCBzb3VyY2UpLAogIGltbXV0YWJsZSBUYWtlcyB3aXRoIGV4YWN0IGJvZHkvbW90aW9uL3NvdXJjZSByZWZlcmVuY2VzLCBBL0IgY29tcGFyaXNvbiwgYW5kCiAgdGhlIENoYXJhY3RlciBpZGVudGl0eSBydWxlIChzdGFibGUgYGNoYXJhY3Rlcl9pZGA7IHJlZmVyZW5jZXMgc25hcHNob3R0ZWQgcGVyCiAgVGFrZSkuCi0gVGhlIHdvcmtzcGFjZSBjb250cmFjdCBpcyBGUk9aRU4gKGBkb2NzL3Byb2R1Y3QvU1RVRElPX1dPUktTUEFDRV9WMl9ERUNJU0lPTi5tZGApOgogIGxpYnJhcnkgPSByZWZlcmVuY2VzIG9ubHk7IGNhbnZhcyA9IG1vZGUtcmVwbGFjZWQgKENoYXJhY3Rlci9Nb3Rpb24vU2NlbmUpOwogIGluc3BlY3RvciA9IHBlcm1pdHRlZCBwYXJhbWV0ZXJzIG9ubHk7IHRha2UudHJhbnNwb3J0ID0gaW1tdXRhYmxlIFRha2UKICBwbGF5YmFjayAvIEEtQiAvIGV4cG9ydDsgcmVzZWFyY2guZHJhd2VyID0gcmVjZWlwdHMsIHRyYWNlcywgaGFzaGVzLiBObyBuZXcKICBwYW5lbHMgd2l0aG91dCBhIGNvbnRyYWN0IGFtZW5kbWVudC4KLSBTdHVkaW8gSXNzdWUgIzMyIFNUT1Agc3RhbmRzOiBubyBuZXcgZmVhdHVyZSBwYW5lbCwgbm8gbmV3IGJhY2tlbmQgZHJvcGRvd24KICBvcHRpb24sIG5vIHByb21vdGlvbmFsIGNvcHksIG5vIHF1YWxpdHkgY2xhaW0uIHYwIGlzIGEgY3JlYXRpb24tZmxvdyBhbmQKICBjYXVzYWwtaWRlbnRpdHkgbWlsZXN0b25lLCBub3QgYSBxdWFsaXR5IGltcHJvdmVtZW50LgotIE91dCBvZiBzY29wZSBmb3IgdGhlIHBsYW46IENDLUIxIGNoYW5nZXMgKHNlcGFyYXRlIHByaXZhdGUgcmVzZWFyY2ggbGluZWFnZSBvbgogIGFuIHVubWVyZ2VkIENvcmUgcGluKSwgV0cyIHBhdGhzLCBPRC0yIGJvZGllcyBhbmQgT0QtMyBzY2hlZHVsZXMgYXMgcHJvZHVjdAogIG9wZXJhdGlvbnMgKHRoZWlyIG93biBnYXRlcyksIFNNQyBpbXBvcnQsIFNjZW5lL0FTTVIgcmVuZGVyaW5nLCBhbnkgQ29yZSBjaGFuZ2UsCiAgYW55IG91dHB1dC1zaWRlIGF1ZGlvIHByb2Nlc3NpbmcuCgojIyAxLiBWZXJpZmllZCBjdXJyZW50IHN0YXRlIChzdXBlcnZpc29yLWNoZWNrZWQgb24gU3R1ZGlvIG1haW4sIDIwMjYtMTEtMDYpCgotIGBzcmMvQXBwLnRzeGAg4oCUIG9uZSB2ZXJ0aWNhbGx5IHN0YWNrZWQgcGFnZTogQ2hhcmFjdGVyLCBTY3JpcHQsIERpcmVjdGlvbiwKICBQZXJmb3JtLCBUYWtlIGhpc3RvcnksIENvbXBhcmUgc2VjdGlvbnMsIHRoZW4gY29sbGFwc2libGUgZXhwZXJpbWVudCBlbnRyYW5jZXMKICBmb3IgV0cyLCBDQy1CMSAoYHNyYy9jY0IxL+KApmAgdmlhIGBDQ0IxQXRlbGllcmApLCBhbmQgQ0MtQTIKICAoYHNyYy9jY0EyL0NDQXRlbGllci50c3hgKS4KLSBgc3JjL3N0dWRpby9tb2RlbC50c2AgKyBgY29tcGFyZVNlbGVjdGlvbi50c2Ag4oCUIGRyYWZ0IGFuZCBBL0Igc2VsZWN0aW9uIG1vZGVsOwogIGBzcmMvcGVyZm9ybWFuY2UvVGFrZVN0b3JlLnRzYCDigJQgVGFrZSByZWNvcmRzOyBicm93c2VyIHN0b3JhZ2UgaG9sZHMgZHJhZnRzIGFuZAogIHRoZSBUYWtlIGluZGV4IChwZXIgdGhlIEFwcCBmb290ZXIpOyBnZW5lcmF0ZWQgV0FWL3RyYWNlIGZpbGVzIGFyZSBwZXJzaXN0ZWQKICBzZXJ2ZXItc2lkZSBieSBTSEEtMjU2LgotIFNlcnZlcnM6IGBzZXJ2ZXIvbGl2ZS1zZXJ2ZXIubWpzYCAobWFpbiBhcHAgcGF0aCksIGBzZXJ2ZXIvY2MtYTItc2VydmVyLm1qc2AKICAoQ0MtQTIgcGF0aDogdmFsaWRhdGVzIENvcmUgcmVzdWx0cywgd3JpdGVzIGltbXV0YWJsZSBUYWtlIEpTT04gdG8KICBgPERBVEE+L3Rha2VzLzxydW5JZD4uanNvbmAsIGRlZmF1bHQgREFUQSA9IGA8c3R1ZGlvPi8ubW9ycGhvLWNjLWEyLWRhdGFgKSwKICBgc2VydmVyL2NjLWIxLWxvY2FsLm1qc2AgKHNlcGFyYXRlIHN0b3JlKS4KLSBMZXNzb24gcmVjb3JkZWQgb24gSXNzdWUgIzMyICgyMDI2LTExLTA2KTogdGhlIGNyZWF0b3IncyBsb2NhbCBUYWtlIGRhdGEgZnJvbQogIHRoZSBXRzIgYXVkaXRpb24gd2FzIGRlbGV0ZWQsIHNvIHR3byBoaXN0b3JpY2FsbHkgaW1wb3J0YW50IFRha2VzIGFyZSBub3cKICBwZXJtYW5lbnRseSB1bmlkZW50aWZpYWJsZS4gVGFrZS9DaGFyYWN0ZXIgcGVyc2lzdGVuY2UgYW5kIGV4cG9ydCBhcmUgdGhlcmVmb3JlCiAgYSBmaXJzdC1jbGFzcyBwbGFubmluZyB0b3BpYyBiZWxvdywgbm90IGFuIGFmdGVydGhvdWdodC4KCiMjIDIuIFF1ZXN0aW9ucwoKIyMjIFFJMSDigJQgVGFyZ2V0IG1vZHVsZSBtYXBwaW5nCgpNYXAgdGhlIGFkb3B0ZWQgdjAgZmxvdyAoc2VsZWN0IENoYXJhY3RlciDihpIgY29uZmlybSBib2R5IHJldmlzaW9uIOKGkiBmaXhlZApQZXJmb3JtYW5jZSDihpIgUGVyZm9ybSDihpIgVGFrZSDihpIgQS9CIOKGkiBleHBvcnQpIG9udG8gdGhlIGV4aXN0aW5nIG1vZHVsZXMgbmFtZWQgaW4KwqcxLiBGb3IgZWFjaCBmbG93IHN0ZXAsIG5hbWU6IHRoZSBleGlzdGluZyBmaWxlKHMpIHRoYXQgY2FycnkgaXQgdG9kYXksIHdoZXRoZXIKdGhleSBhcmUgcmV1c2VkIGFzLWlzLCBhZGFwdGVkLCBvciByZXBsYWNlZCwgYW5kIHdoaWNoIHNlcnZlciAobGl2ZS1zZXJ2ZXIgdnMKY2MtYTItc2VydmVyKSBpcyB0aGUgdjAgcGVyZm9ybSBwYXRoLiBJZiB0aGUgdHdvIHNlcnZlcnMgc2hvdWxkIGNvbnZlcmdlLCBzYXkgYXQKd2hpY2ggcGxhbiBzdGVwIGFuZCB3aGF0IGhhcHBlbnMgdG8gdGhlIG90aGVyIHBhdGgncyBleGlzdGluZyBiZWhhdmlvci4gQXZvaWQgYQpiaWctYmFuZyByZXdyaXRlOiB0aGUgcGxhbiBtdXN0IGtlZXAgdGhlIGFwcCBydW5uYWJsZSBhdCBldmVyeSBzdGVwLgoKIyMjIFFJMiDigJQgQ2hhcmFjdGVyIHBlcnNpc3RlbmNlIGFuZCBpZGVudGl0eQoKRGVzaWduIHRoZSBDaGFyYWN0ZXIgc3RvcmUgaW1wbGVtZW50aW5nIHRoZSBhZG9wdGVkIGRhdGEgc3RydWN0dXJlczogd2hlcmUKYGNoYXJhY3Rlcl9pZGAsIGRpc3BsYXkgbmFtZSwgY3VycmVudCBkZWZhdWx0IHJlZmVyZW5jZXMsIGFuZCBjcmVhdGlvbi91cGRhdGUKbWV0YWRhdGEgbGl2ZSAoc2VydmVyLXNpZGUgZmlsZSBzdG9yZSB2cyBicm93c2VyIHN0b3JhZ2Ug4oCUIGFyZ3VlIHRoZSBjaG9pY2UKYWdhaW5zdCB0aGUgV0cyIGxlc3NvbjogYnJvd3Nlci1vbmx5IGRhdGEgd2FzIHBhcnQgb2YgaG93IHByb3ZlbmFuY2Ugd2FzIGxvc3QpLAp0aGUgb24tZGlzayBmb3JtYXQsIGFuZCBob3cgYSBDaGFyYWN0ZXIncyBib2R5IHJlZmVyZW5jZSBmb3IgTTAvTTEgaXMgZXhwcmVzc2VkIGFzCmFuIGV4YWN0IENvcmUgcmVmZXJlbmNlICh0aGUgc2FtZSByZWZlcmVuY2Ugdm9jYWJ1bGFyeSB0aGUgVGFrZSBzbmFwc2hvdCB1c2VzKS4KU3RhdGUgZXhwbGljaXRseSBob3cgQ2hhcmFjdGVyIHJlY29yZHMgcmVsYXRlIHRvIGV4aXN0aW5nIGRyYWZ0IHN0b3JhZ2UgaW4KYHNyYy9zdHVkaW8vbW9kZWwudHNgIOKAlCBtaWdyYXRpb24sIGNvZXhpc3RlbmNlLCBvciByZXBsYWNlbWVudC4KCiMjIyBRSTMg4oCUIFRha2UgcmV0ZW50aW9uIGFuZCBleHBvcnQKCkRlc2lnbiB0aGUgcmV0ZW50aW9uIHN0b3J5IHNvIGEgVGFrZSBjYW4gbmV2ZXIgYWdhaW4gYmVjb21lIHVuaWRlbnRpZmlhYmxlOgooMSkgd2hhdCB0aGUgaW1tdXRhYmxlIFRha2UgcmVjb3JkIG11c3QgY29udGFpbiAocGVyIHRoZSBhZG9wdGVkIHNwZWNpZmljYXRpb24pLAooMikgYW4gZXhwbGljaXQgZXhwb3J0IGFjdGlvbiBpbiB0YWtlLnRyYW5zcG9ydCAoYnVuZGxlIGZvcm1hdDogVGFrZSBKU09OICsgV0FWICsKcmVjZWlwdHMpIHRoYXQgdGhlIGNyZWF0b3IgY2FuIHNhdmUgb3V0c2lkZSB0aGUgYXBwJ3MgZGF0YSBkaXJlY3RvcmllcywKKDMpIHdoYXQgdGhlIGFwcCBzaG93cyB3aGVuIGEgVGFrZSdzIHJlZmVyZW5jZWQgYXJ0aWZhY3RzIGFyZSBtaXNzaW5nLiBLZWVwIHRoZQpleGlzdGluZyBTSEEtMjU2IGFydGlmYWN0IGFkZHJlc3Npbmc7IGRvIG5vdCBkZXNpZ24gYSBjbG91ZCBzZXJ2aWNlLgoKIyMjIFFJNCDigJQgVUkgcmVvcmdhbml6YXRpb24gd2l0aGluIHRoZSBmcm96ZW4gc2xvdHMKCkRlc2NyaWJlIHRoZSB2MCBzY3JlZW4gZmxvdyBzdHJpY3RseSBpbnNpZGUgdGhlIEFEUiBzbG90czogaG93IHRoZSBDQy1BMgpjb21wYXJpc29uIGVudHJhbmNlIGJlY29tZXMgdGhlIGNhbnZhcyBDaGFyYWN0ZXIvTW90aW9uIG1vZGVzIGZvciB0aGUgdjAgZmxvb3IsCndoYXQgdGhlIGluc3BlY3RvciBzaG93cyAoYm9keSBwcmVzZXQgY2hvaWNlLCBpZGVudGl0eS9yZWZlcmVuY2Ugc3VtbWFyaWVzLApyZWFkLW9ubHkgc291cmNlIHByb2ZpbGUpLCB3aGF0IHN0YXlzIGluIHRha2UudHJhbnNwb3J0LCBhbmQgd2hhdCBtb3ZlcyB0bwpyZXNlYXJjaC5kcmF3ZXIuIFN0YXRlIHdoYXQgaGFwcGVucyB0byB0aGUgZXhpc3Rpbmcgc3RhY2tlZCBzZWN0aW9ucyAoQ2hhcmFjdGVyIC8KU2NyaXB0IC8gRGlyZWN0aW9uIC8gUGVyZm9ybSAvIFRha2UgaGlzdG9yeSAvIENvbXBhcmUpOiB3aGljaCBhcmUgcmV1c2VkIGFzIHRoZQp2MCBmbG93LCB3aGljaCByZXRpcmUsIGFuZCBhdCB3aGljaCBzdGVwLiBObyBuZXcgcGFuZWxzOyBpZiB5b3UgYmVsaWV2ZSBhIHNsb3QKYW1lbmRtZW50IGlzIHVuYXZvaWRhYmxlLCBmbGFnIGl0IGFzIGFuIGV4cGxpY2l0IGRlY2lzaW9uIGl0ZW0gaW5zdGVhZCBvZgphc3N1bWluZyBpdC4KCiMjIyBRSTUg4oCUIFN0ZXAgZGVjb21wb3NpdGlvbiBhbmQgYWNjZXB0YW5jZQoKRGVjb21wb3NlIHRoZSB3b3JrIGludG8gdGhlIHNtYWxsZXN0IGluZGVwZW5kZW50bHkgbWVyZ2VhYmxlIHN0ZXBzIChzdWdnZXN0ZWQKc2hhcGU6IFMxIHBlcnNpc3RlbmNlL2lkZW50aXR5IGZvdW5kYXRpb25zLCBTMiBwZXJmb3JtIHBhdGggdW5pZmljYXRpb24sIFMzIFVJCmZsb3cgcmVvcmdhbml6YXRpb24sIFM0IGV4cG9ydC9yZXRlbnRpb24sIFM1IGJhc2VsaW5lIGNhcHR1cmUg4oCUIHJlb3JkZXIgb3Igc3BsaXQKYXMgeW91IGp1ZGdlIGJldHRlcikuIEZvciBlYWNoIHN0ZXAgZ2l2ZTogZ29hbCwgZmlsZXMgdG91Y2hlZCAoZXhwZWN0ZWQpLCBleHBsaWNpdApub24tZ29hbHMsIHRoZSBhY2NlcHRhbmNlIGNoZWNrcyB0aGF0IG11c3QgcGFzcyAoZXhpc3RpbmcgdGVzdC9zbW9rZSBzdWl0ZXMgYnkKbmFtZSBwbHVzIGFueSBuZXcgY2hlY2tzIHRoZSBzdGVwIGFkZHMpLCBhbmQgd2hldGhlciBhbiBPd25lciBkZWNpc2lvbiBpcyBuZWVkZWQKYmVmb3JlIHRoYXQgc3RlcCBzdGFydHMuIEV2ZXJ5IHN0ZXAgbXVzdCBrZWVwIGFsbCBwcmUtZXhpc3RpbmcgY2hlY2tzIGdyZWVuIGFuZAptdXN0IG5vdCBjaGFuZ2UgQ29yZSwgQ0MtQjEsIG9yIFdHMiBiZWhhdmlvci4KCiMjIyBRSTYg4oCUIEZyZXNoIGJhc2VsaW5lIGNhcHR1cmUKCkJlY2F1c2UgdGhlIFdHMi1lcmEgVGFrZXMgYXJlIHBlcm1hbmVudGx5IHVuaWRlbnRpZmlhYmxlIChJc3N1ZSAjMzIgcmVjb3JkKSwKaW5jbHVkZSBpbiB0aGUgcGxhbiBhIGJhc2VsaW5lLWNhcHR1cmUgc3RlcDogcmVjb3JkaW5nIGZyZXNoIE0wIGFuZCBNMSBUYWtlcwp0aHJvdWdoIHRoZSBmaW5pc2hlZCB2MCBmbG93LCBleHBvcnRpbmcgdGhlbSB2aWEgdGhlIFFJMyBtZWNoYW5pc20sIGFuZCByZWNvcmRpbmcKdGhlaXIgVGFrZSBpZHMgYW5kIHJlZmVyZW5jZXMgaW4gYSByZXBvc2l0b3J5IGRvY3VtZW50IHNvIGZ1dHVyZSBxdWFsaXR5IGdhdGVzCmhhdmUgYW4gaWRlbnRpZmllZCBjb21wYXJpc29uIGJhc2VsaW5lLiBTdGF0ZSBleGFjdGx5IHdoYXQgZ2V0cyByZWNvcmRlZCBhbmQKd2hlcmUsIGFuZCB3aGF0IGNsYWltIHRoaXMgYmFzZWxpbmUgZG9lcyBhbmQgZG9lcyBub3Qgc3VwcG9ydC4KCiMjIyBRSTcg4oCUIFJpc2tzLCBleGNsdXNpb25zLCBhbmQgcmV2ZXJzZSBxdWVzdGlvbnMKCkxpc3QgdGhlIHBsYW4ncyBtYWluIHJpc2tzIChlc3BlY2lhbGx5OiBwZXJzaXN0ZW5jZS1mb3JtYXQgbG9jay1pbiwgYWNjaWRlbnRhbApzY29wZSBjcmVlcCB0b3dhcmQgT0QtMi9TTUMsIGFueSBwcmVzc3VyZSB0byB0b3VjaCB0aGUgZnJvemVuIEFEUiksIHRoZQpleGNsdXNpb25zIHlvdSBhcmUgcmVseWluZyBvbiwgYW5kIGFueXRoaW5nIGluIMKnwqcw4oCTMSB5b3UgZm91bmQgaW5hY2N1cmF0ZSBhZ2FpbnN0CnRoZSBhY3R1YWwgY29kZS4gRW5kIHdpdGggYXQgbW9zdCB0aHJlZSByZXZlcnNlIHF1ZXN0aW9ucyB3aGVyZSBhbiBPd25lciBvcgpzdXBlcnZpc29yIGRlY2lzaW9uIGlzIGdlbnVpbmVseSByZXF1aXJlZCBiZWZvcmUgaW1wbGVtZW50YXRpb24gY291bGQgc3RhcnQuCgojIyAzLiBTdXBlcnZpc29yJ3MgcHJvdmlzaW9uYWwgcG9zaXRpb25zIChhcmd1ZSBhZ2FpbnN0IHRoZW0gaWYgd3JvbmcpCgotIFBJMTogVGhlIHYwIHBlcmZvcm0gcGF0aCBpcyB0aGUgQ0MtQTIgbGluZWFnZSAoYGNjLWEyLXNlcnZlcmAgKyBgQ0NBdGVsaWVyYCkKICBwcm9tb3RlZCBpbnRvIHRoZSBwcm9kdWN0IGZsb3c7IHRoZSBsaXZlLXNlcnZlciBkcmFmdCBwYXRoIGlzIGFkYXB0ZWQgb3IKICByZXRpcmVkIHN0ZXAgYnkgc3RlcCwgbmV2ZXIgaW4gb25lIHJld3JpdGUuCi0gUEkyOiBDaGFyYWN0ZXIgcmVjb3JkcyBsaXZlIHNlcnZlci1zaWRlIGFsb25nc2lkZSB0aGUgVGFrZSBzdG9yZSAoc2FtZSBkYXRhCiAgcm9vdCBmYW1pbHkpLCBub3QgYnJvd3Nlci1vbmx5OyBicm93c2VyIHN0b3JhZ2UgbWF5IGNhY2hlLCBuZXZlciBvd24sIGlkZW50aXR5LgotIFBJMzogRXhwb3J0L3JldGVudGlvbiAoUUkzKSBhbmQgYmFzZWxpbmUgY2FwdHVyZSAoUUk2KSBjb21lIGJlZm9yZSBvciB3aXRoIHRoZQogIFVJIHJlb3JnYW5pemF0aW9uLCBub3QgYWZ0ZXIgaXQg4oCUIHByb3ZlbmFuY2UgZmlyc3QsIHByZXNlbnRhdGlvbiBzZWNvbmQuCi0gUEk0OiBFYWNoIGltcGxlbWVudGF0aW9uIHN0ZXAgaXMgaXRzIG93biBQUiB3aXRoIGl0cyBvd24gYWNjZXB0YW5jZSByZWNvcmQ7CiAgdGhlIHBsYW4gZG9jdW1lbnQgaXMgYWRvcHRlZCBvbmNlLCBidXQgaW1wbGVtZW50YXRpb24gR08gaXMgcGVyLXN0ZXAgb3IKICBleHBsaWNpdGx5IGJhdGNoZWQgYnkgdGhlIE93bmVyLgoKIyMgNC4gQW5zd2VyIGZvcm1hdAoKQW5zd2VyIGFzIE9ORSBuZXcgZG9jdW1lbnQgaW4gYSBORVcgRHJhZnQgUFIgYWdhaW5zdCBTdHVkaW8gbWFpbiAoZG9jcy1vbmx5OyBubwpjb2RlLCBubyBVSSBjaGFuZ2UsIG5vIENvcmUgY2hhbmdlLCBkbyBub3QgbWVyZ2UpLiBUaXRsZSBpdApgQ0hSLVItMjAyNjExMDYtMDJgLiBTdHJ1Y3R1cmU6IHZlcmRpY3Qgc3VtbWFyeTsgcGVyLXF1ZXN0aW9uIGFuc3dlcnMgUUkx4oCTUUk3Owp0aGUgc3RlcCB0YWJsZSAoc3RlcCwgZ29hbCwgZmlsZXMsIG5vbi1nb2FscywgYWNjZXB0YW5jZSBjaGVja3MsIE93bmVyIGRlY2lzaW9uCm5lZWRlZCk7IHRoZSBwZXJzaXN0ZW5jZS9leHBvcnQgZGVzaWduIGluIGVub3VnaCBkZXRhaWwgdG8gaW1wbGVtZW50IGZyb207IGEKY2xhaW0gdGFibGUgZm9yIHRoZSBiYXNlbGluZTsgcmV2ZXJzZSBxdWVzdGlvbnMgKG1heCAzKS4gV2hlcmUgdGhlIGFuc3dlciByZWxpZXMKb24gY3VycmVudC1jb2RlIGZhY3RzLCBjaXRlIHRoZSBmaWxlIG9yIGRvY3VtZW50LiDml6XmnKzoqp7jga7opoHntITjgpLlhpLpoK3jgavku5jjgZHjgabjgY/jgaDjgZXjgYTjgIIK
+# CHR-Q-20261106-02 — Questions to ChatGPT: implementation plan for the adopted Character v0 floor
+
+From: Muse (supervisor), on behalf of the Owner
+To: ChatGPT (research / design / implementation lead)
+Date: 2026-11-06
+Tracking issue: Studio #38 ([CHR-1] Character v0 実装計画)
+Status: QUESTIONS ONLY. This document asks for an implementation **plan**. It does
+not authorize writing code, changing Core, changing the UI, or merging anything.
+
+## 0. What is already decided (do not relitigate)
+
+- The Character v0 product specification is ADOPTED (CHR-R-20261106-01, on Studio
+  main as `docs/product/character-v0-response-20261106.md`, merged 2026-11-06).
+  This round plans only its **v0 floor**: M0/M1 body choice, the CC-A2 fixed
+  performance (「あい」-equivalent three tasks, read-only prescribed LF100 source),
+  immutable Takes with exact body/motion/source references, A/B comparison, and
+  the Character identity rule (stable `character_id`; references snapshotted per
+  Take).
+- The workspace contract is FROZEN (`docs/product/STUDIO_WORKSPACE_V2_DECISION.md`):
+  library = references only; canvas = mode-replaced (Character/Motion/Scene);
+  inspector = permitted parameters only; take.transport = immutable Take
+  playback / A-B / export; research.drawer = receipts, traces, hashes. No new
+  panels without a contract amendment.
+- Studio Issue #32 STOP stands: no new feature panel, no new backend dropdown
+  option, no promotional copy, no quality claim. v0 is a creation-flow and
+  causal-identity milestone, not a quality improvement.
+- Out of scope for the plan: CC-B1 changes (separate private research lineage on
+  an unmerged Core pin), WG2 paths, OD-2 bodies and OD-3 schedules as product
+  operations (their own gates), SMC import, Scene/ASMR rendering, any Core change,
+  any output-side audio processing.
+
+## 1. Verified current state (supervisor-checked on Studio main, 2026-11-06)
+
+- `src/App.tsx` — one vertically stacked page: Character, Script, Direction,
+  Perform, Take history, Compare sections, then collapsible experiment entrances
+  for WG2, CC-B1 (`src/ccB1/…` via `CCB1Atelier`), and CC-A2
+  (`src/ccA2/CCAtelier.tsx`).
+- `src/studio/model.ts` + `compareSelection.ts` — draft and A/B selection model;
+  `src/performance/TakeStore.ts` — Take records; browser storage holds drafts and
+  the Take index (per the App footer); generated WAV/trace files are persisted
+  server-side by SHA-256.
+- Servers: `server/live-server.mjs` (main app path), `server/cc-a2-server.mjs`
+  (CC-A2 path: validates Core results, writes immutable Take JSON to
+  `<DATA>/takes/<runId>.json`, default DATA = `<studio>/.morpho-cc-a2-data`),
+  `server/cc-b1-local.mjs` (separate store).
+- Lesson recorded on Issue #32 (2026-11-06): the creator's local Take data from
+  the WG2 audition was deleted, so two historically important Takes are now
+  permanently unidentifiable. Take/Character persistence and export are therefore
+  a first-class planning topic below, not an afterthought.
+
+## 2. Questions
+
+### QI1 — Target module mapping
+
+Map the adopted v0 flow (select Character → confirm body revision → fixed
+Performance → Perform → Take → A/B → export) onto the existing modules named in
+§1. For each flow step, name: the existing file(s) that carry it today, whether
+they are reused as-is, adapted, or replaced, and which server (live-server vs
+cc-a2-server) is the v0 perform path. If the two servers should converge, say at
+which plan step and what happens to the other path's existing behavior. Avoid a
+big-bang rewrite: the plan must keep the app runnable at every step.
+
+### QI2 — Character persistence and identity
+
+Design the Character store implementing the adopted data structures: where
+`character_id`, display name, current default references, and creation/update
+metadata live (server-side file store vs browser storage — argue the choice
+against the WG2 lesson: browser-only data was part of how provenance was lost),
+the on-disk format, and how a Character's body reference for M0/M1 is expressed as
+an exact Core reference (the same reference vocabulary the Take snapshot uses).
+State explicitly how Character records relate to existing draft storage in
+`src/studio/model.ts` — migration, coexistence, or replacement.
+
+### QI3 — Take retention and export
+
+Design the retention story so a Take can never again become unidentifiable:
+(1) what the immutable Take record must contain (per the adopted specification),
+(2) an explicit export action in take.transport (bundle format: Take JSON + WAV +
+receipts) that the creator can save outside the app's data directories,
+(3) what the app shows when a Take's referenced artifacts are missing. Keep the
+existing SHA-256 artifact addressing; do not design a cloud service.
+
+### QI4 — UI reorganization within the frozen slots
+
+Describe the v0 screen flow strictly inside the ADR slots: how the CC-A2
+comparison entrance becomes the canvas Character/Motion modes for the v0 floor,
+what the inspector shows (body preset choice, identity/reference summaries,
+read-only source profile), what stays in take.transport, and what moves to
+research.drawer. State what happens to the existing stacked sections (Character /
+Script / Direction / Perform / Take history / Compare): which are reused as the
+v0 flow, which retire, and at which step. No new panels; if you believe a slot
+amendment is unavoidable, flag it as an explicit decision item instead of
+assuming it.
+
+### QI5 — Step decomposition and acceptance
+
+Decompose the work into the smallest independently mergeable steps (suggested
+shape: S1 persistence/identity foundations, S2 perform path unification, S3 UI
+flow reorganization, S4 export/retention, S5 baseline capture — reorder or split
+as you judge better). For each step give: goal, files touched (expected), explicit
+non-goals, the acceptance checks that must pass (existing test/smoke suites by
+name plus any new checks the step adds), and whether an Owner decision is needed
+before that step starts. Every step must keep all pre-existing checks green and
+must not change Core, CC-B1, or WG2 behavior.
+
+### QI6 — Fresh baseline capture
+
+Because the WG2-era Takes are permanently unidentifiable (Issue #32 record),
+include in the plan a baseline-capture step: recording fresh M0 and M1 Takes
+through the finished v0 flow, exporting them via the QI3 mechanism, and recording
+their Take ids and references in a repository document so future quality gates
+have an identified comparison baseline. State exactly what gets recorded and
+where, and what claim this baseline does and does not support.
+
+### QI7 — Risks, exclusions, and reverse questions
+
+List the plan's main risks (especially: persistence-format lock-in, accidental
+scope creep toward OD-2/SMC, any pressure to touch the frozen ADR), the
+exclusions you are relying on, and anything in §§0–1 you found inaccurate against
+the actual code. End with at most three reverse questions where an Owner or
+supervisor decision is genuinely required before implementation could start.
+
+## 3. Supervisor's provisional positions (argue against them if wrong)
+
+- PI1: The v0 perform path is the CC-A2 lineage (`cc-a2-server` + `CCAtelier`)
+  promoted into the product flow; the live-server draft path is adapted or
+  retired step by step, never in one rewrite.
+- PI2: Character records live server-side alongside the Take store (same data
+  root family), not browser-only; browser storage may cache, never own, identity.
+- PI3: Export/retention (QI3) and baseline capture (QI6) come before or with the
+  UI reorganization, not after it — provenance first, presentation second.
+- PI4: Each implementation step is its own PR with its own acceptance record;
+  the plan document is adopted once, but implementation GO is per-step or
+  explicitly batched by the Owner.
+
+## 4. Answer format
+
+Answer as ONE new document in a NEW Draft PR against Studio main (docs-only; no
+code, no UI change, no Core change, do not merge). Title it
+`CHR-R-20261106-02`. Structure: verdict summary; per-question answers QI1–QI7;
+the step table (step, goal, files, non-goals, acceptance checks, Owner decision
+needed); the persistence/export design in enough detail to implement from; a
+claim table for the baseline; reverse questions (max 3). Where the answer relies
+on current-code facts, cite the file or document. 日本語の要約を冒頭に付けてください。
