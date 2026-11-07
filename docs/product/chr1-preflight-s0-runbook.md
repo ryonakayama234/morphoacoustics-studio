@@ -31,7 +31,7 @@ Issue #41 が指定する browser 候補と、現行 `server/live-server.mjs` �
 
 ~~~bash
 node --version
-node --test scripts/chr1-s0-inventory.test.mjs
+node --test scripts/chr1-s0-inventory.policy.mjs
 
 # AUDIT_DIR は Owner が自分で実パスを指定する
 mkdir -p -- "$AUDIT_DIR"
