@@ -122,8 +122,10 @@ test('read-only Node permission policy + pre/post snapshot proves no input write
     await put(b1, 'runs/r/studio-pair.json', '{}');
     const external = await put(studio, 'external.txt', 'private');
     await symlink(external, path.join(cc, 'takes/link.json'));
-    for (const p of [cc, path.join(cc, 'takes'), path.join(cc, 'artifacts'),
-      b1, path.join(b1, 'runs'), path.join(b1, 'runs/r')]) await chmod(p, 0o555);
+    const readOnlyDirectories = [cc, path.join(cc, 'takes'), path.join(cc, 'artifacts'),
+      b1, path.join(b1, 'runs'), path.join(b1, 'runs/r')];
+    try {
+    for (const p of readOnlyDirectories) await chmod(p, 0o555);
     for (const p of [path.join(cc, 'takes/id.json'), path.join(cc, 'artifacts/s.bin'),
       path.join(b1, 'runs/r/studio-pair.json')]) await chmod(p, 0o444);
     const before = await snapshot(studio);
@@ -140,6 +142,11 @@ test('read-only Node permission policy + pre/post snapshot proves no input write
     assert.match(proc.stderr, /READ ONLY/);
     assert.deepEqual(await snapshot(studio), before);
     assert.equal(await readFile(external, 'utf8'), 'private');
+    } finally {
+      // Restore test-fixture directory permissions only after the read-only audit.
+      // Otherwise non-root GitHub runners cannot remove the temporary fixture.
+      for (const p of readOnlyDirectories) await chmod(p, 0o755);
+    }
   });
 });
 
