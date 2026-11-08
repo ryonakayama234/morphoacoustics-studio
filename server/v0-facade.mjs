@@ -140,6 +140,10 @@ async function syncDir(dir) {
   finally { await fd.close(); }
 }
 async function immutableWrite(filename, bytes) {
+  const dir = path.dirname(filename);
+  const dirStat = await fs.lstat(dir);
+  if (!dirStat.isDirectory() || dirStat.isSymbolicLink())
+    throw invalid('Unsafe v0 directory', 'UNSAFE_PATH', 500);
   const fd = await fs.open(filename, 'wx', 0o600);
   try { await fd.writeFile(bytes); await fd.sync(); }
   finally { await fd.close(); }
@@ -216,6 +220,9 @@ export function makeV0Envelope({ stored, request, physical, source, receipt = nu
   };
 }
 async function safeReadEnvelope(filename) {
+  const dirStat = await fs.lstat(path.dirname(filename));
+  if (!dirStat.isDirectory() || dirStat.isSymbolicLink())
+    throw invalid('Unsafe v0 directory', 'UNSAFE_PATH', 500);
   const st = await fs.lstat(filename);
   if (!st.isFile() || st.isSymbolicLink() || st.size <= 0 || st.size > 1024 * 1024)
     throw invalid('Unsafe v0 Take file', 'CORRUPT', 500);
@@ -225,6 +232,12 @@ async function safeReadEnvelope(filename) {
     if (after.dev !== st.dev || after.ino !== st.ino || after.size !== st.size)
       throw invalid('v0 Take file changed', 'CORRUPT', 500);
     const bytes = await handle.readFile();
+    const end = await handle.stat(), pathEnd = await fs.lstat(filename);
+    if (end.dev !== st.dev || end.ino !== st.ino || end.size !== st.size ||
+        pathEnd.dev !== st.dev || pathEnd.ino !== st.ino ||
+        pathEnd.size !== st.size || pathEnd.mtimeMs !== st.mtimeMs ||
+        bytes.length !== st.size)
+      throw invalid('v0 Take changed while reading', 'CORRUPT', 500);
     return { record: JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)),
       sha256: HASH(bytes) };
   } finally { await handle.close(); }
