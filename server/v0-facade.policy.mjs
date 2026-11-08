@@ -18,7 +18,7 @@ const selected = body => ({ kind: 'core_body_preset', preset_id: body,
   preset_revision: 1, producer_repo: 'ryonakayama234/morphoacoustics',
   core_commit: CORE, backend_id: 'cc-a2-axial-live/1',
   binding_state: 'SELECTED_UNRESOLVED' });
-const hashes = { source: 'sha256:' + 'a'.repeat(64), task: 'sha256:' + 'b'.repeat(64) };
+const hashes = { source: 'sha256:' + 'a'.repeat(64), task: 'b'.repeat(64) };
 
 async function setup(t, body = 'v3b-axial-M0', opts = {}) {
   const dataDir = await mkdtemp(path.join(tmpdir(), 'chr-s3-'));
