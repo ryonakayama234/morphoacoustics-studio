@@ -71,6 +71,35 @@ jobs:
           if ! curl -fsS http://127.0.0.1:8766/cc-a2/health >/dev/null; then
             echo "CC-A2 service failed to start"; cat cc-a2-server.log; exit 1
           fi
+          node --input-type=module -e '
+            import assert from "node:assert/strict";
+            const base = "http://127.0.0.1:8766";
+            const json = (method, url, body) => fetch(base + url, {
+              method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body)
+            });
+            const selected = { kind: "core_body_preset", preset_id: "v3b-axial-M0",
+              preset_revision: 1, producer_repo: "ryonakayama234/morphoacoustics",
+              core_commit: "b569f044bfda309dff1a00cccf8365754e6b1355",
+              backend_id: "cc-a2-axial-live/1", binding_state: "SELECTED_UNRESOLVED" };
+            const created = await json("POST", "/characters", { name: "CI Character", active_body_ref: selected });
+            assert.equal(created.status, 201);
+            const first = await created.json();
+            const id = first.snapshot.character_id;
+            assert.match(id, /^[0-9a-f-]{36}$/);
+            const changed = await json("PATCH", "/characters/" + id,
+              { expected_revision: 1, changes: { name: "Renamed" } });
+            assert.equal(changed.status, 200);
+            assert.equal((await changed.json()).head.current_revision, 2);
+            assert.equal((await json("PATCH", "/characters/" + id,
+              { expected_revision: 1, changes: { name: "Stale" } })).status, 409);
+            assert.equal((await fetch(base + "/characters/" + id + "/revisions/1")).status, 200);
+            const untrusted = { ...selected, binding_state: "VERIFIED_BOUND",
+              preparation_digest: "sha256:" + "a".repeat(64), body_receipt_ref: "fake" };
+            assert.equal((await json("PATCH", "/characters/" + id,
+              { expected_revision: 2, changes: { active_body_ref: untrusted } })).status, 400);
+            assert.equal((await fetch(base + "/cc-a2/health")).status, 200);
+            console.log("Character HTTP create/CAS/409/history/binding boundary PASS");
+          '
           node server/cc-a2-smoke.mjs
           kill "$SERVER_PID" || true
           wait "$SERVER_PID" || true
