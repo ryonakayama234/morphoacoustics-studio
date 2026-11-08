@@ -155,6 +155,12 @@ async function readJson(req) {
   return JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(parts)));
 }
 
+async function readCharacterJson(req) {
+  try { return await readJson(req); }
+  catch (e) { throw new CharacterStoreError('INVALID',
+    e instanceof Error ? e.message : String(e), 400); }
+}
+
 async function executeCore(request, runDir) {
   const input = path.join(runDir, 'request.json');
   const output = path.join(runDir, 'output');
@@ -308,7 +314,9 @@ export async function startServer() {
     await fs.mkdir(path.join(DATA, folder), { recursive: true });
   }
   const characterStore = createCharacterStore({ dataDir: DATA, verifyBoundEvidence: assertCausalResult });
-  await characterStore.initialize();
+  let characterStoreStartupError = null;
+  try { await characterStore.initialize(); }
+  catch (e) { characterStoreStartupError = e; console.error('Character store unavailable:', e); }
   const validateRequest = await makeValidator('request');
   const validateResult = await makeValidator('result');
   let occupied = false;
@@ -319,12 +327,14 @@ export async function startServer() {
       }
       // CHR-1 S1 is a creative metadata API, never a physical Perform route.
       if (req.url === '/characters' || (req.url || '').startsWith('/characters/')) {
+        if (characterStoreStartupError) return response(res, 500,
+          reject('CHARACTER_STORE_UNAVAILABLE', 'Character integrity startup check failed'));
         try {
           if (req.method === 'GET' && req.url === '/characters') {
             return response(res, 200, await characterStore.list());
           }
           if (req.method === 'POST' && req.url === '/characters') {
-            return response(res, 201, await characterStore.create(await readJson(req)));
+            return response(res, 201, await characterStore.create(await readCharacterJson(req)));
           }
           const match = /^\/characters\/([a-f0-9-]{36})(?:\/revisions\/([0-9]{1,6}))?$/.exec(req.url || '');
           if (!match) return response(res, 404, reject('NOT_FOUND', 'Character route not found'));
@@ -334,7 +344,7 @@ export async function startServer() {
               match[2] === undefined ? undefined : Number(match[2])));
           }
           if (req.method === 'PATCH' && match[2] === undefined) {
-            const body = await readJson(req);
+            const body = await readCharacterJson(req);
             if (!body || typeof body !== 'object' || Array.isArray(body)
               || Object.keys(body).some((key) => !['expected_revision', 'changes'].includes(key))
               || !Object.hasOwn(body, 'expected_revision') || !Object.hasOwn(body, 'changes')) {
