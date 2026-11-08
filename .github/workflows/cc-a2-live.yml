@@ -7,6 +7,7 @@ on:
       - "src/App.tsx"
       - "server/cc-a2-*.mjs"
       - "server/character-store*.mjs"
+      - "server/take-archive*.mjs"
       - "vite.config.ts"
       - "package.json"
       - "docs/cc-a2-*.md"
@@ -17,6 +18,7 @@ on:
       - "src/App.tsx"
       - "server/cc-a2-*.mjs"
       - "server/character-store*.mjs"
+      - "server/take-archive*.mjs"
       - "vite.config.ts"
       - "package.json"
       - "docs/cc-a2-*.md"
@@ -54,6 +56,7 @@ jobs:
           npm test
           node --test server/cc-a2-server.policy.mjs
           node --test server/character-store.policy.mjs
+          node --test server/take-archive.policy.mjs
       - name: Execute fresh two-body physics and persist Takes
         env:
           MORPHO_CORE_DIR: ${{ github.workspace }}/core
@@ -101,6 +104,39 @@ jobs:
             console.log("Character HTTP create/CAS/409/history/binding boundary PASS");
           '
           node server/cc-a2-smoke.mjs
+          node --input-type=module -e '
+            import assert from "node:assert/strict";
+            import { readFile } from "node:fs/promises";
+            const summary = JSON.parse(await readFile("cc-a2-smoke-summary.json", "utf8"));
+            const base = "http://127.0.0.1:8766";
+            for (const item of [summary.a, summary.b, summary.refusal]) {
+              const id = item.take_id;
+              const looked = await fetch(base + "/cc-a2/takes/" + id);
+              assert.equal(looked.status, 200);
+              const state = await looked.json();
+              assert.equal(state.take_id, id);
+              assert.equal(state.read_only, true);
+              assert.equal(state.can_export, true);
+              assert.equal(state.refusal_only, item.realization_outcome !== "FEASIBLE");
+              const response = await fetch(base + "/cc-a2/takes/" + id + "/archive");
+              assert.equal(response.status, 200);
+              assert.equal(response.headers.get("content-type"), "application/zip");
+              assert.equal(response.headers.get("cache-control"), "no-store");
+              const zip = Buffer.from(await response.arrayBuffer());
+              assert.equal(zip.toString("hex", 0, 4), "504b0304");
+              assert.equal(zip.toString("hex", zip.length - 22, zip.length - 18), "504b0506");
+              assert.ok(zip.includes(Buffer.from("BagIt-Version: 1.0")));
+              assert.ok(zip.includes(Buffer.from("manifest-sha256.txt")));
+              if (item.realization_outcome === "FEASIBLE") {
+                for (const ext of [".wav", ".npy", ".csv", ".json"])
+                  assert.ok(zip.includes(Buffer.from(ext)));
+              }
+            }
+            assert.equal((await fetch(base + "/cc-a2/takes/take_..%2fetc")).status, 400);
+            assert.equal((await fetch(base + "/cc-a2/takes/" + summary.a.take_id,
+              { headers: { Origin: "https://evil.example" } })).status, 403);
+            console.log("CHR-1 S2 HTTP full lookup, physical BagIt/refusal and origin PASS");
+          '
           kill "$SERVER_PID" || true
           wait "$SERVER_PID" || true
           node server/cc-a2-server.mjs > cc-a2-restart.log 2>&1 &
