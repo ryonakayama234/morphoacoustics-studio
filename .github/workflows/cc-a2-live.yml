@@ -6,6 +6,7 @@ on:
       - "src/ccA2/**"
       - "src/App.tsx"
       - "server/cc-a2-*.mjs"
+      - "server/character-store*.mjs"
       - "vite.config.ts"
       - "package.json"
       - "docs/cc-a2-*.md"
@@ -15,6 +16,7 @@ on:
       - "src/ccA2/**"
       - "src/App.tsx"
       - "server/cc-a2-*.mjs"
+      - "server/character-store*.mjs"
       - "vite.config.ts"
       - "package.json"
       - "docs/cc-a2-*.md"
@@ -51,6 +53,7 @@ jobs:
           npm run build
           npm test
           node --test server/cc-a2-server.policy.mjs
+          node --test server/character-store.policy.mjs
       - name: Execute fresh two-body physics and persist Takes
         env:
           MORPHO_CORE_DIR: ${{ github.workspace }}/core
