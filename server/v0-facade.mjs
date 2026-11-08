@@ -271,7 +271,7 @@ export function createV0Facade({ dataDir, characterStore, performCore, verifyPin
     let receipt = null;
     if (physical.result?.realization_outcome === 'FEASIBLE') {
       const art = physical.result.artifacts.find(a => a.kind === 'physical-receipt');
-      const match = /^\\/cc-a2\\/artifacts\\/([a-f0-9]{64})\\.json$/.exec(art?.ref || '');
+      const match = /^\/cc-a2\/artifacts\/([a-f0-9]{64})\.json$/.exec(art?.ref || '');
       if (!match) throw invalid('Physical receipt reference missing', 'CORE_RESULT_MISMATCH', 502);
       const filename = path.join(root, 'artifacts', match[1] + '.json');
       const st = await fs.lstat(filename);
