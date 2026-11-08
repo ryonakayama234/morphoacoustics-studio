@@ -25,6 +25,7 @@ const KINDS = Object.freeze({
   'physical-receipt': { extension: 'json', original: 'physical_receipt.json', media: 'application/json' },
 });
 const sha = b => createHash('sha256').update(b).digest('hex');
+const isSameJson = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const cmp = (a, b) => a.dev === b.dev && a.ino === b.ino && a.size === b.size
   && a.mtimeMs === b.mtimeMs && a.ctimeMs === b.ctimeMs;
 const errCode = e => e?.code === 'ENOENT' ? 'MISSING' : 'UNREADABLE';
@@ -113,7 +114,7 @@ export function createTakeArchive({ dataDir, coreSha }) {
     await safeDirectory(path.join(root, 'takes'));
     const folders = ['takes'];
     if (await safeDirectory(path.join(root, 'v0-takes'), true)) folders.push('v0-takes');
-    const matches = [], unreadable = [];
+    const matches = [], unreadable = [], envelopes = [];
     for (const folder of folders) {
       const dir = path.join(root, folder);
       for (const name of (await fs.readdir(dir)).sort()) {
@@ -127,7 +128,13 @@ export function createTakeArchive({ dataDir, coreSha }) {
           const data = await readRecord(path.join(dir, name));
           const parsed = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(data.bytes));
           const recordId = parsed?.result?.take_id ?? parsed?.take_id;
-          if (recordId === id) matches.push({ record: parsed, evidence: data, rel });
+          if (folder === 'v0-takes') {
+            // A v0 envelope supplements the v1 physical Take with the SAME ID.
+            // It is never a second physical Take / duplicate logical result.
+            if (recordId === id) envelopes.push({ record: parsed, evidence: data, rel });
+            else if (!assertedIdOrFalse(recordId))
+              unreadable.push({ file: rel, reason: 'UNKNOWN_TAKE_ID' });
+          } else if (recordId === id) matches.push({ record: parsed, evidence: data, rel });
           else if (!assertedIdOrFalse(recordId)) unreadable.push({ file: rel, reason: 'UNKNOWN_TAKE_ID' });
         } catch (e) { unreadable.push({ file: rel, reason: e.code || 'BAD_RECORD' }); }
       }
@@ -139,6 +146,31 @@ export function createTakeArchive({ dataDir, coreSha }) {
       issues: ['AMBIGUOUS_TAKE_ID'], matching_records: matches.map(m => m.rel), unreadable_records: unreadable };
     const { record, evidence, rel } = matches[0];
     const issues = problemsFor(record, coreSha);
+    let v0 = null;
+    if (envelopes.length > 1) issues.push('AMBIGUOUS_V0_ENVELOPE');
+    if (envelopes.length === 1) {
+      const item = envelopes[0], e = item.record;
+      if (e?.record_schema !== 'studio-v0-take-envelope/v0' ||
+          e.take_id !== id || e.physical_take_id !== id ||
+          e.core_commit !== record.core_commit ||
+          e.physical_take_record_sha256 !== 'sha256:' + evidence.sha256 ||
+          e.character_id !== record.request?.character?.character_id ||
+          e.character_revision !== record.request?.character?.revision ||
+          e.full_verified_source_state !== 'UNKNOWN' ||
+          e.provenance_state !== 'INCOMPLETE_PROVENANCE' ||
+          !/^sha256:[a-f0-9]{64}$/.test(e.character_snapshot_sha256 || '') ||
+          !/^sha256:[a-f0-9]{64}$/.test(e.request_snapshot_sha256 || '') ||
+          !isSameJson(e.request_snapshot, record.request) ||
+          !isSameJson(e.performance_result_v1, record.result) ||
+          !isSameJson(e.frozen_core_result, record.frozen_core_result)) {
+        issues.push('INCONSISTENT_V0_ENVELOPE');
+      } else {
+        v0 = { record_file: item.rel, record_sha256: item.evidence.sha256,
+          source_samples_evidence: e.source_samples_evidence,
+          source_samples_sha256: e.source_samples_sha256,
+          full_verified_source_state: 'UNKNOWN' };
+      }
+    }
     const items = [], seen = new Set();
     const feasible = record.result?.realization_outcome === 'FEASIBLE';
     const refused = !feasible && record.result?.realization_outcome &&
@@ -192,7 +224,8 @@ export function createTakeArchive({ dataDir, coreSha }) {
     }
     if (issues.some(x => x.startsWith('MISSING_KIND:') || x === 'MISSING_REQUIRED_ARTIFACT_KIND')) missing = true;
     if (issues.some(x => x.startsWith('UNSAFE_') || x.startsWith('REFUSAL_CARRIES') ||
-        x.startsWith('INCONSISTENT_') || x === 'UNKNOWN_REALIZATION_OUTCOME')) corrupt = true;
+        x.startsWith('INCONSISTENT_') || x.startsWith('AMBIGUOUS_V0_') ||
+        x === 'UNKNOWN_REALIZATION_OUTCOME')) corrupt = true;
     // An old pin is never upgraded in place; detailed anomalies remain visible.
     const legacy = record.core_commit !== coreSha;
     if (legacy) issues.push('OLD_CORE_PIN');
@@ -214,7 +247,8 @@ export function createTakeArchive({ dataDir, coreSha }) {
     return { take_id: id, state, can_export: canExport, read_only: true,
       refusal_only: !!refused, core_commit: record.core_commit || null,
       created_at: record.created_at || null, record_file: rel, record_sha256: evidence.sha256,
-      artifacts: items, issues, unreadable_records: unreadable };
+      artifacts: items, issues, unreadable_records: unreadable,
+      v0_envelope: v0 };
   }
   async function lookup(id) { return inventory(id); }
   /** Streams a BagIt ZIP into a caller-owned writable (HTTP response or file).
@@ -250,10 +284,24 @@ export function createTakeArchive({ dataDir, coreSha }) {
       add('data/archive-evidence.json', jsonBuffer({ schema: 'chr1-s2-export-evidence/v1',
         take_id: id, state: summary.state, issues: summary.issues,
         refusal_only: summary.refusal_only,
-        provenance_note: 'Legacy CC-A2 record: actual-run source samples SHA and immutable server Character revision are not asserted.',
+        provenance_note: summary.v0_envelope
+          ? 'S3 source sample SHA is RECOMPUTED only; actual-run VERIFIED SOURCE remains UNKNOWN.'
+          : 'Legacy CC-A2 record: actual-run source samples SHA and immutable server Character revision are not asserted.',
         record_sha256: doc.sha256, core_commit: summary.core_commit }));
-      if (record.character_snapshot && record.character_revision !== undefined)
+      if (summary.v0_envelope) {
+        const v0read = await readRecord(path.join(root, summary.v0_envelope.record_file));
+        if (v0read.sha256 !== summary.v0_envelope.record_sha256)
+          throw new TakeArchiveError('FILE_CHANGED', 'v0 envelope changed before export');
+        const v0 = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(v0read.bytes));
+        if (v0.physical_take_record_sha256 !== 'sha256:' + doc.sha256 ||
+            !isSameJson(v0.request_snapshot, record.request) ||
+            !isSameJson(v0.performance_result_v1, record.result))
+          throw new TakeArchiveError('FILE_CHANGED', 'v0 envelope no longer matches physical Take');
+        add('data/v0-take.json', v0read.bytes);
+        add('data/character-revision.json', jsonBuffer(v0.character_snapshot));
+      } else if (record.character_snapshot && record.character_revision !== undefined) {
         add('data/character-revision.json', jsonBuffer(record.character_snapshot));
+      }
       for (const art of summary.artifacts) {
         const opened = await openRegular(path.join(root, art.path), MAX_ARTIFACT);
         held.push(opened);

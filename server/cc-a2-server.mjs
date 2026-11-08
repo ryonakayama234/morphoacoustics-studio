@@ -11,6 +11,7 @@ import { verifyCoreRevision } from './core-revision.mjs';
 import { quantizedRawPressureSha256, X2A_RAW_PRESSURE_SHA256 } from './raw-pressure-oracle.mjs';
 import { createCharacterStore, CharacterStoreError } from './character-store.mjs';
 import { createTakeArchive, TakeArchiveError } from './take-archive.mjs';
+import { createV0Facade, V0FacadeError, recomputeFixedSource } from './v0-facade.mjs';
 
 // Full reviewed tree must be explicitly repinned after any Core PR HEAD change.
 // This is a candidate SHA, NOT an accepted main release.
@@ -159,6 +160,11 @@ async function readJson(req) {
 async function readCharacterJson(req) {
   try { return await readJson(req); }
   catch (e) { throw new CharacterStoreError('INVALID',
+    e instanceof Error ? e.message : String(e), 400); }
+}
+async function readV0Json(req) {
+  try { return await readJson(req); }
+  catch (e) { throw new V0FacadeError('INVALID_JSON',
     e instanceof Error ? e.message : String(e), 400); }
 }
 
@@ -319,6 +325,22 @@ export async function startServer() {
   let characterStoreStartupError = null;
   try { await characterStore.initialize(); }
   catch (e) { characterStoreStartupError = e; console.error('Character store unavailable:', e); }
+  const verifyV0Pin = () => {
+    verifyCoreRevision(CORE, CORE_SHA);
+    assertNoIgnoredToolExecutables(CORE);
+  };
+  const v0Facade = createV0Facade({
+    dataDir: DATA, characterStore, archive: takeArchive, verifyPin: verifyV0Pin,
+    performCore: async (request) => {
+      if (!validateRequest(request)) throw new V0FacadeError('INVALID_V1_REQUEST',
+        JSON.stringify(validateRequest.errors), 400);
+      return performCC(request, validateResult);
+    },
+    recomputeSource: () => recomputeFixedSource({
+      coreDir: CORE, python: PYTHON, verifyPin: verifyV0Pin,
+    }),
+  });
+  await v0Facade.initialize();
   const validateRequest = await makeValidator('request');
   const validateResult = await makeValidator('result');
   let occupied = false;
@@ -359,6 +381,33 @@ export async function startServer() {
         } catch (e) {
           if (e instanceof CharacterStoreError) return response(res, e.status, reject(e.code, e.message));
           return response(res, 500, reject('CHARACTER_STORE_FAILED',
+            e instanceof Error ? e.message : String(e)));
+        }
+      }
+      // CHR-1 S3: immutable Character-revision authority; same physical CC-A2
+      // executor and busy gate, never a direct public VERIFIED_BOUND binding API.
+      if ((req.url || '').startsWith('/studio/v0/')) {
+        try {
+          if (req.method === 'GET' && req.url === '/studio/v0/capabilities')
+            return response(res, 200, v0Facade.capabilities());
+          if (characterStoreStartupError) return response(res, 500,
+            reject('CHARACTER_STORE_UNAVAILABLE', 'Character integrity startup check failed'));
+          if (req.method === 'POST' && req.url === '/studio/v0/perform') {
+            if (occupied) return response(res, 429, reject('BUSY', 'Physical solver already running'));
+            occupied = true;
+            try { return response(res, 201, await v0Facade.submit(await readV0Json(req))); }
+            finally { occupied = false; }
+          }
+          const m = /^\/studio\/v0\/takes\/([^/?]+)$/.exec(req.url || '');
+          if (req.method === 'GET' && m)
+            return response(res, 200, await v0Facade.lookup(m[1]));
+          return response(res, 404, reject('NOT_FOUND', 'v0 route not found'));
+        } catch (e) {
+          if (e instanceof V0FacadeError || e instanceof CharacterStoreError ||
+              e instanceof TakeArchiveError)
+            return response(res, e.status, reject(e.code, e.message));
+          if (e?.code === 'ENOENT') return response(res, 404, reject('NOT_FOUND', 'v0 Take not found'));
+          return response(res, 502, reject('V0_EXECUTION_FAILED',
             e instanceof Error ? e.message : String(e)));
         }
       }
