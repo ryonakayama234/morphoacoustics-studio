@@ -175,7 +175,7 @@ export function makeV0Envelope({ stored, request, physical, source, receipt = nu
   if (outcome === 'FEASIBLE' && (!ref.body_receipt_ref ||
       ref.binding_state !== 'VERIFIED_BOUND' ||
       receipt?.source?.id !== 'lf_fixed' || receipt?.source?.f0_hz !== 100 ||
-      !DIGEST.test(receipt?.task_plan_sha256)))
+      !/^[a-f0-9]{64}$/.test(receipt?.task_plan_sha256 || '')))
     throw invalid('Missing verified physical body/task/source receipt', 'CORE_RESULT_MISMATCH', 502);
   const recomputed = source && DIGEST.test(source.sha256) ? source : null;
   return {
