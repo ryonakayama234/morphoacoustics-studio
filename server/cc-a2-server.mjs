@@ -162,6 +162,11 @@ async function readCharacterJson(req) {
   catch (e) { throw new CharacterStoreError('INVALID',
     e instanceof Error ? e.message : String(e), 400); }
 }
+async function readV0Json(req) {
+  try { return await readJson(req); }
+  catch (e) { throw new V0FacadeError('INVALID_JSON',
+    e instanceof Error ? e.message : String(e), 400); }
+}
 
 async function executeCore(request, runDir) {
   const input = path.join(runDir, 'request.json');
@@ -390,7 +395,7 @@ export async function startServer() {
           if (req.method === 'POST' && req.url === '/studio/v0/perform') {
             if (occupied) return response(res, 429, reject('BUSY', 'Physical solver already running'));
             occupied = true;
-            try { return response(res, 201, await v0Facade.submit(await readJson(req))); }
+            try { return response(res, 201, await v0Facade.submit(await readV0Json(req))); }
             finally { occupied = false; }
           }
           const m = /^\/studio\/v0\/takes\/([^/?]+)$/.exec(req.url || '');
