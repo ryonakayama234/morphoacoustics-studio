@@ -10,6 +10,7 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import { verifyCoreRevision } from './core-revision.mjs';
 import { quantizedRawPressureSha256, X2A_RAW_PRESSURE_SHA256 } from './raw-pressure-oracle.mjs';
 import { createCharacterStore, CharacterStoreError } from './character-store.mjs';
+import { createTakeArchive, TakeArchiveError } from './take-archive.mjs';
 
 // Full reviewed tree must be explicitly repinned after any Core PR HEAD change.
 // This is a candidate SHA, NOT an accepted main release.
@@ -314,6 +315,7 @@ export async function startServer() {
     await fs.mkdir(path.join(DATA, folder), { recursive: true });
   }
   const characterStore = createCharacterStore({ dataDir: DATA, verifyBoundEvidence: assertCausalResult });
+  const takeArchive = createTakeArchive({ dataDir: DATA, coreSha: CORE_SHA });
   let characterStoreStartupError = null;
   try { await characterStore.initialize(); }
   catch (e) { characterStoreStartupError = e; console.error('Character store unavailable:', e); }
@@ -364,6 +366,35 @@ export async function startServer() {
         return response(res, 200, { status: 'ready', core_commit: CORE_SHA });
       }
       if (req.method === 'GET' && req.url === '/cc-a2/takes') return response(res, 200, await listTakes());
+      // CHR-1 S2: read-only full inventory lookup and streamed BagIt download.
+      // Never goes through newestPhysicalTakes (fixed pin/latest-100 window).
+      if ((req.url || '').startsWith('/cc-a2/takes/')) {
+        if (req.method !== 'GET') return response(res, 405, reject('METHOD_NOT_ALLOWED', 'Take archive is GET-only'));
+        const m = /^\/cc-a2\/takes\/([^/?]+)(\/archive)?$/.exec(req.url);
+        if (!m) return response(res, 404, reject('NOT_FOUND', 'Take archive route not found'));
+        try {
+          const info = await takeArchive.lookup(m[1]);
+          if (!m[2]) return response(res, 200, info);
+          if (!info.can_export) return response(res, 409,
+            { code: 'EXPORT_BLOCKED', integrity_state: info.state, issues: info.issues });
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'application/zip');
+          res.setHeader('Content-Disposition', 'attachment; filename="take-' + m[1] + '.bag.zip"');
+          res.setHeader('Cache-Control', 'no-store');
+          res.setHeader('X-Content-Type-Options', 'nosniff');
+          await takeArchive.exportZip(m[1], res);
+          return;
+        } catch (e) {
+          // A stream-time verification failure aborts the transfer without ZIP EOCD.
+          if (res.headersSent || res.destroyed) {
+            if (!res.destroyed) res.destroy();
+            return;
+          }
+          res.removeHeader('Content-Disposition');
+          if (e instanceof TakeArchiveError) return response(res, e.status, reject(e.code, e.message));
+          return response(res, 500, reject('TAKE_ARCHIVE_FAILED', e instanceof Error ? e.message : String(e)));
+        }
+      }
       if (req.method === 'GET' && /^\/cc-a2\/artifacts\/[a-f0-9]{64}\.(wav|npy|csv|json)$/.test(req.url || '')) {
         const name = req.url.slice('/cc-a2/artifacts/'.length);
         const data = await fs.readFile(path.join(DATA, 'artifacts', name));
