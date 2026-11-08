@@ -146,3 +146,38 @@ test('symlinked snapshots and unrecognized character directory entries fail clos
   await fs.symlink(revPath + '.bak', revPath);
   await assert.rejects(createCharacterStore({ dataDir: dir }).initialize(), isCode('CORRUPT', 500));
 }));
+
+
+test('independent Node process reloads and CAS-updates the same character', async () => fixture(async (store, dir) => {
+  const { snapshot } = await store.create(charInput());
+  const { execFileSync } = await import('node:child_process');
+  const code = `import { createCharacterStore } from ${JSON.stringify(new URL('./character-store.mjs', import.meta.url).href)};
+    const s=createCharacterStore({dataDir:process.argv[1]});
+    const before=await s.get(process.argv[2]);
+    if(before.head.current_revision!==1)throw Error('missing persisted head');
+    const after=await s.update(process.argv[2],1,{name:'child-process'});
+    console.log(after.head.current_revision);`.replace('DYNAMIC_IMPORT', JSON.stringify(new URL('./character-store.mjs', import.meta.url).href));
+  const stdout = execFileSync(process.execPath, ['--input-type=module', '-e', code, dir, snapshot.character_id], { encoding: 'utf8' });
+  assert.equal(stdout.trim(), '2');
+  assert.equal((await store.get(snapshot.character_id)).snapshot.name, 'child-process');
+}));
+
+test('abandoned pre-directory and pre-head creates recover only noncommitted work', async () => fixture(async (store, dir) => {
+  await store.initialize();
+  const { randomUUID } = await import('node:crypto');
+  const orphanId = randomUUID();
+  const orphanPath = path.join(dir, 'characters', orphanId);
+  await fs.mkdir(orphanPath);
+  const committed = await store.create(charInput());
+  const id = committed.snapshot.character_id;
+  const folder = path.join(dir, 'characters', id);
+  await fs.rm(path.join(folder, 'head.json'));
+  await fs.writeFile(path.join(folder, 'pending.json'), JSON.stringify({ record_schema: 'studio-character-store/v0',
+    character_id: id, expected_revision: 0, new_revision: 1,
+    snapshot_sha256: committed.head.snapshot_sha256 }));
+  const restarted = createCharacterStore({ dataDir: dir });
+  await restarted.initialize();
+  await assert.rejects(fs.access(orphanPath), { code: 'ENOENT' });
+  assert.equal((await restarted.get(id)).head.current_revision, 1);
+  assert.equal((await restarted.list()).length, 1);
+}));
