@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import Ajv2020 from 'ajv/dist/2020.js';
 import { verifyCoreRevision } from './core-revision.mjs';
 import { quantizedRawPressureSha256, X2A_RAW_PRESSURE_SHA256 } from './raw-pressure-oracle.mjs';
+import { createCharacterStore, CharacterStoreError } from './character-store.mjs';
 
 // Full reviewed tree must be explicitly repinned after any Core PR HEAD change.
 // This is a candidate SHA, NOT an accepted main release.
@@ -306,6 +307,8 @@ export async function startServer() {
   for (const folder of ['runs', 'takes', 'artifacts']) {
     await fs.mkdir(path.join(DATA, folder), { recursive: true });
   }
+  const characterStore = createCharacterStore({ dataDir: DATA, verifyBoundEvidence: assertCausalResult });
+  await characterStore.initialize();
   const validateRequest = await makeValidator('request');
   const validateResult = await makeValidator('result');
   let occupied = false;
@@ -313,6 +316,39 @@ export async function startServer() {
     try {
       if (req.headers.origin && !['http://127.0.0.1:5173', 'http://localhost:5173'].includes(req.headers.origin)) {
         return response(res, 403, reject('ORIGIN', 'Untrusted origin'));
+      }
+      // CHR-1 S1 is a creative metadata API, never a physical Perform route.
+      if (req.url === '/characters' || (req.url || '').startsWith('/characters/')) {
+        try {
+          if (req.method === 'GET' && req.url === '/characters') {
+            return response(res, 200, await characterStore.list());
+          }
+          if (req.method === 'POST' && req.url === '/characters') {
+            return response(res, 201, await characterStore.create(await readJson(req)));
+          }
+          const match = /^\/characters\/([a-f0-9-]{36})(?:\/revisions\/([0-9]{1,6}))?$/.exec(req.url || '');
+          if (!match) return response(res, 404, reject('NOT_FOUND', 'Character route not found'));
+          const id = match[1];
+          if (req.method === 'GET') {
+            return response(res, 200, await characterStore.get(id,
+              match[2] === undefined ? undefined : Number(match[2])));
+          }
+          if (req.method === 'PATCH' && match[2] === undefined) {
+            const body = await readJson(req);
+            if (!body || typeof body !== 'object' || Array.isArray(body)
+              || Object.keys(body).some((key) => !['expected_revision', 'changes'].includes(key))
+              || !Object.hasOwn(body, 'expected_revision') || !Object.hasOwn(body, 'changes')) {
+              return response(res, 400, reject('INVALID', 'Expected expected_revision and changes'));
+            }
+            return response(res, 200,
+              await characterStore.update(id, body.expected_revision, body.changes));
+          }
+          return response(res, 405, reject('METHOD_NOT_ALLOWED', 'Character operation not allowed'));
+        } catch (e) {
+          if (e instanceof CharacterStoreError) return response(res, e.status, reject(e.code, e.message));
+          return response(res, 500, reject('CHARACTER_STORE_FAILED',
+            e instanceof Error ? e.message : String(e)));
+        }
       }
       if (req.method === 'GET' && req.url === '/cc-a2/health') {
         return response(res, 200, { status: 'ready', core_commit: CORE_SHA });
