@@ -160,7 +160,7 @@ function bodyTakeRef(s, result) {
   } : { ...s.active_body_ref, binding_state: 'SELECTED_UNRESOLVED',
     preparation_digest: undefined, body_receipt_ref: undefined };
 }
-export function makeV0Envelope({ stored, request, physical, source }) {
+export function makeV0Envelope({ stored, request, physical, source, receipt = null }) {
   const s = stored.snapshot, result = physical.result;
   const outcome = result?.realization_outcome;
   if (!result || result.request_id !== request.request_id ||
@@ -173,8 +173,10 @@ export function makeV0Envelope({ stored, request, physical, source }) {
     throw invalid('Invalid validated Core outcome for v0 envelope', 'CORE_RESULT_MISMATCH', 502);
   const ref = bodyTakeRef(s, result);
   if (outcome === 'FEASIBLE' && (!ref.body_receipt_ref ||
-      ref.binding_state !== 'VERIFIED_BOUND'))
-    throw invalid('Missing verified physical body receipt', 'CORE_RESULT_MISMATCH', 502);
+      ref.binding_state !== 'VERIFIED_BOUND' ||
+      receipt?.source?.id !== 'lf_fixed' || receipt?.source?.f0_hz !== 100 ||
+      !DIGEST.test(receipt?.task_plan_sha256)))
+    throw invalid('Missing verified physical body/task/source receipt', 'CORE_RESULT_MISMATCH', 502);
   const recomputed = source && DIGEST.test(source.sha256) ? source : null;
   return {
     record_schema: V0_SCHEMA, take_id: result.take_id, physical_take_id: result.take_id,
@@ -188,7 +190,8 @@ export function makeV0Envelope({ stored, request, physical, source }) {
     performance_result_v1: structuredClone(result),
     physical_take_record_sha256: HASH(Buffer.from(JSON.stringify(physical, null, 2), 'utf8')),
     exact_body_ref: ref,
-    motion_ref: { id: 'cc-a2-fixed-three-task', task_plan_sha256: null,
+    motion_ref: { id: 'cc-a2-fixed-three-task',
+      task_plan_sha256: receipt?.task_plan_sha256 ?? null,
       evidence: outcome === 'FEASIBLE' ? 'CORE_PHYSICAL_RECEIPT' : 'UNAVAILABLE_REFUSAL' },
     source_profile_ref: {
       id: 'lf_fixed', f0_hz: 100, read_only: true,
@@ -265,7 +268,24 @@ export function createV0Facade({ dataDir, characterStore, performCore, verifyPin
       catch { source = null; } // never convert missing evidence into VERIFIED SOURCE
       verifyPin();
     }
-    const envelope = makeV0Envelope({ stored, request, physical, source });
+    let receipt = null;
+    if (physical.result?.realization_outcome === 'FEASIBLE') {
+      const art = physical.result.artifacts.find(a => a.kind === 'physical-receipt');
+      const match = /^\\/cc-a2\\/artifacts\\/([a-f0-9]{64})\\.json$/.exec(art?.ref || '');
+      if (!match) throw invalid('Physical receipt reference missing', 'CORE_RESULT_MISMATCH', 502);
+      const filename = path.join(root, 'artifacts', match[1] + '.json');
+      const st = await fs.lstat(filename);
+      if (!st.isFile() || st.isSymbolicLink() || st.size > 2_000_000)
+        throw invalid('Unsafe physical receipt', 'CORE_RESULT_MISMATCH', 502);
+      const rawReceipt = await fs.readFile(filename);
+      if (HASH(rawReceipt) !== 'sha256:' + match[1])
+        throw invalid('Physical receipt SHA mismatch', 'CORE_RESULT_MISMATCH', 502);
+      receipt = JSON.parse(rawReceipt.toString('utf8'));
+      if (receipt.body?.preset_id !== request.embodiment.preset_id ||
+          receipt.body?.preparation_digest !== physical.result.embodiment.preparation_digest)
+        throw invalid('Physical receipt body mismatch', 'CORE_RESULT_MISMATCH', 502);
+    }
+    const envelope = makeV0Envelope({ stored, request, physical, source, receipt });
     await immutableWrite(path.join(takeDir, resultFilename(envelope.take_id)), json(envelope));
     return { envelope, integrity_state: 'INCOMPLETE_PROVENANCE',
       source_verification_state: 'UNKNOWN', read_only: true };
@@ -278,6 +298,7 @@ export function createV0Facade({ dataDir, characterStore, performCore, verifyPin
   async function lookup(takeId) {
     const { record, sha256 } = await safeReadEnvelope(path.join(takeDir, resultFilename(takeId)));
     if (record.record_schema !== V0_SCHEMA || record.take_id !== takeId ||
+        record.request_snapshot_sha256 !== HASH(json(record.request_snapshot)) ||
         record.physical_take_id !== takeId || record.core_commit !== CORE_SHA ||
         record.full_verified_source_state !== 'UNKNOWN' ||
         record.provenance_state !== 'INCOMPLETE_PROVENANCE' ||
