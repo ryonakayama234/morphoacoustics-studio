@@ -8,6 +8,10 @@ on:
       - "server/cc-a2-*.mjs"
       - "server/character-store*.mjs"
       - "server/take-archive*.mjs"
+      - "server/v0-*.mjs"
+      - "src/studio/characterApi.ts"
+      - "src/performance/V0TakeAdapter*.ts"
+      - "vite.config.ts"
       - "vite.config.ts"
       - "package.json"
       - "docs/cc-a2-*.md"
@@ -57,6 +61,7 @@ jobs:
           node --test server/cc-a2-server.policy.mjs
           node --test server/character-store.policy.mjs
           node --test server/take-archive.policy.mjs
+          node --test server/v0-facade.policy.mjs
       - name: Execute fresh two-body physics and persist Takes
         env:
           MORPHO_CORE_DIR: ${{ github.workspace }}/core
@@ -104,6 +109,7 @@ jobs:
             console.log("Character HTTP create/CAS/409/history/binding boundary PASS");
           '
           node server/cc-a2-smoke.mjs
+          node server/v0-smoke.mjs
           node --input-type=module -e '
             import assert from "node:assert/strict";
             import { readFile } from "node:fs/promises";
@@ -179,6 +185,9 @@ jobs:
             ${{ runner.temp }}/cc-a2-data/artifacts/*.json
             ${{ runner.temp }}/cc-a2-browser-evidence/takes/*.json
             cc-a2-smoke-summary.json
+            v0-s3-smoke-summary.json
+            ${{ runner.temp }}/cc-a2-data/v0-takes/*.json
+            ${{ runner.temp }}/cc-a2-data/v0-replays/*.json
             cc-a2-server.log
             cc-a2-restart.log
             ${{ runner.temp }}/cc-a2-browser-evidence/cc-a2-browser.png
