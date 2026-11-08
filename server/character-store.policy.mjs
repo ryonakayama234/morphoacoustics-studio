@@ -156,7 +156,7 @@ test('independent Node process reloads and CAS-updates the same character', asyn
     const before=await s.get(process.argv[2]);
     if(before.head.current_revision!==1)throw Error('missing persisted head');
     const after=await s.update(process.argv[2],1,{name:'child-process'});
-    console.log(after.head.current_revision);`.replace('DYNAMIC_IMPORT', JSON.stringify(new URL('./character-store.mjs', import.meta.url).href));
+    console.log(after.head.current_revision);`;
   const stdout = execFileSync(process.execPath, ['--input-type=module', '-e', code, dir, snapshot.character_id], { encoding: 'utf8' });
   assert.equal(stdout.trim(), '2');
   assert.equal((await store.get(snapshot.character_id)).snapshot.name, 'child-process');
