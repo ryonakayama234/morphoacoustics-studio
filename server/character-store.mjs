@@ -2,6 +2,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 export const CHARACTER_SCHEMA = 'studio-character-store/v0';
 const CORE_COMMIT = 'b569f044bfda309dff1a00cccf8365754e6b1355';
@@ -12,6 +13,7 @@ const HEX = /^sha256:[a-f0-9]{64}$/;
 const REVISION = /^[0-9]{6}\.json$/;
 const MAX_REVISION = 999999;
 const MAX_BYTES = 65536;
+const DEFAULT_DATA_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.morpho-cc-a2-data');
 const gates = new Map();
 
 export class CharacterStoreError extends Error {
@@ -177,8 +179,16 @@ function pendingValid(p, id) {
 }
 async function scanCharacter(root, id, recover) {
   const dir = path.join(root, id), revDir = path.join(dir, 'revisions');
-  await directory(dir); await directory(revDir);
+  await directory(dir);
   const names = await fs.readdir(dir);
+  if (!names.includes('revisions') && recover && names.every((n) => /^\.tmp-[0-9a-f-]{36}$/.test(n))) {
+    for (const name of names) {
+      if (!(await regular(path.join(dir, name)))) throw corrupt('Invalid abandoned temporary file');
+      await fs.rm(path.join(dir, name));
+    }
+    await fs.rmdir(dir); await syncDir(root); return null;
+  }
+  await directory(revDir);
   if (names.some((n) => !['head.json', 'pending.json', 'revisions'].includes(n) && !/^\.tmp-[0-9a-f-]{36}$/.test(n)))
     throw corrupt('Unexpected Character file: ' + id);
   const revisionNames = (await fs.readdir(revDir)).sort();
@@ -227,7 +237,7 @@ async function scanCharacter(root, id, recover) {
   return { head: h, snapshot: last.value };
 }
 
-export function createCharacterStore({ dataDir = process.env.MORPHO_CC_A2_DATA_DIR || '.morpho-cc-a2-data',
+export function createCharacterStore({ dataDir = process.env.MORPHO_CC_A2_DATA_DIR || DEFAULT_DATA_DIR,
   verifyBoundEvidence } = {}) {
   const root = path.resolve(dataDir, 'characters');
   let initialized = false;
