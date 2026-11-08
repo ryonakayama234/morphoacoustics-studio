@@ -120,7 +120,7 @@ jobs:
               assert.equal(state.refusal_only, item.realization_outcome !== "FEASIBLE");
               const response = await fetch(base + "/cc-a2/takes/" + id + "/archive");
               assert.equal(response.status, 200);
-              assert.match(response.headers.get("content-type"), /application\\/zip/);
+              assert.equal(response.headers.get("content-type"), "application/zip");
               assert.equal(response.headers.get("cache-control"), "no-store");
               const zip = Buffer.from(await response.arrayBuffer());
               assert.equal(zip.toString("hex", 0, 4), "504b0304");
