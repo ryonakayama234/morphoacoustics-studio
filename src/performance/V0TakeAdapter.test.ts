@@ -45,13 +45,12 @@ describe('v0 Take adapter never casts legacy/v1 contract and never upgrades prov
     refusal.envelope.performance_result_v1.realization_outcome = 'UNSUPPORTED';
     refusal.envelope.performance_result_v1.artifacts = [];
     expect(adaptV0Take(refusal).audioRef).toBeNull();
-    const corrupt = makeRead();
-    corrupt.integrity_state = 'CORRUPT_ARTIFACT';
+    const corrupt = { ...makeRead(), integrity_state: 'CORRUPT_ARTIFACT' as const };
     expect(adaptV0Take(corrupt).audioRef).toBeNull();
   });
   it('refuses a false full verified source claim, unbounded script, and duplicate A/B', () => {
-    const bad = makeRead();
-    bad.envelope.full_verified_source_state = 'VERIFIED' as 'UNKNOWN';
+    const bad = { ...makeRead(), envelope: { ...makeRead().envelope,
+      full_verified_source_state: 'VERIFIED' as 'UNKNOWN' } };
     expect(() => adaptV0Take(bad)).toThrow();
     const script = makeRead();
     script.envelope.request_snapshot.script.segments[0].text = 'unknown';
