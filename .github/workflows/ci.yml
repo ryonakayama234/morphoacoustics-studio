@@ -22,4 +22,5 @@ jobs:
       - run: node --test scripts/chr1-s0-inventory.policy.mjs
       - run: node --test server/character-store.policy.mjs
       - run: node --test server/take-archive.policy.mjs
+      - run: node --test server/v0-facade.policy.mjs
       - run: npm run build
