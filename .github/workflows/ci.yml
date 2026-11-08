@@ -20,4 +20,5 @@ jobs:
       - run: npm run test:bridge
       - run: node --test server/cc-a2-server.policy.mjs
       - run: node --test scripts/chr1-s0-inventory.policy.mjs
+      - run: node --test server/character-store.policy.mjs
       - run: npm run build
