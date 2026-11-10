@@ -172,7 +172,7 @@ export default function WorkspaceV0() {
     try {
       const latest = await characterApi.get(current.snapshot.character_id);
       const exact = await characterApi.revision(current.snapshot.character_id, current.snapshot.revision);
-      if (latest.head.current_revision !== current.snapshot.revision ||
+      if (!exact.snapshot_sha256 || latest.head.current_revision !== current.snapshot.revision ||
           latest.head.snapshot_sha256 !== current.snapshot_sha256 ||
           exact.snapshot_sha256 !== current.snapshot_sha256 ||
           exact.snapshot.active_body_ref?.preset_id !== current.snapshot.active_body_ref.preset_id)
@@ -249,7 +249,7 @@ export default function WorkspaceV0() {
       if (candidate.id !== legacy.id || candidate.sourceSha256 !== legacy.sourceSha256)
         throw new Error('プレビュー以後に下書きが変更されました。再確認してください。');
       const receipts = parseImportReceipts(window.localStorage.getItem(IMPORT_RECEIPT_KEY));
-      if (receipts.some(r => r.sourceSha256 === candidate.sourceSha256 && r.legacyId === candidate.id))
+      if (receipts.some(r => r.legacyId === candidate.id))
         throw new Error('同一 source の import receipt が既にあります。重複作成せず、状態を照合してください。');
       const records = await characterApi.list();
       const collisions = checkImportCollision(records, candidate);
@@ -310,7 +310,9 @@ export default function WorkspaceV0() {
     </header>
     <div className="chr-s4-grid">
       <aside className="chr-s4-library chr-s4-surface" aria-label="Project library" data-slot="project.library">
-        <div className="chr-s4-heading"><h2>Library</h2><button type="button" onClick={newCharacter}>＋ 新規</button></div>
+        <details className="chr-s4-library-details" open>
+        <summary>Library · Character / Body / Take references</summary>
+        <div className="chr-s4-heading"><h2>Characters</h2><button type="button" onClick={newCharacter}>＋ 新規</button></div>
         <p className="chr-s4-hint">サーバ Character 正本</p>
         <button type="button" className="chr-s4-outline" onClick={() => void refreshCharacters()
           .catch(cause => setError('一覧を再取得できません: ' + readableError(cause)))}>再読込</button>
@@ -323,6 +325,8 @@ export default function WorkspaceV0() {
           </button>)}
         </div>
         <div className="chr-s4-separator" />
+        <h3>Body references</h3>
+        <p className="chr-s4-hint">v3b-axial-M0 / v3b-axial-M1。実体ではなく参照です。選択は Inspector で行います。</p>
         <h3>Take 参照</h3><p className="chr-s4-hint">ブラウザに記録した既知 ID のみ。サーバ全件一覧ではありません。</p>
         {takeIds.map(id => <button className="chr-s4-ref" key={id} type="button" title={id}
           onClick={() => void lookupTake(id)}>{short(id)}</button>)}
@@ -336,6 +340,7 @@ export default function WorkspaceV0() {
           <p className="chr-s4-hint">Owner PC の記録のみ。別ストアでの存在や品質は保証しません。</p>
           {BASELINE_TAKES.map(t => <button className="chr-s4-ref" key={t.id} type="button"
             onClick={() => void lookupTake(t.id)}>{t.label}</button>)}
+        </details>
         </details>
       </aside>
       <main className="chr-s4-canvas chr-s4-surface" role="tabpanel" id="chr-s4-canvas"
