@@ -51,6 +51,9 @@ export default function WorkspaceV0() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const drawerRef = useRef<HTMLDialogElement | null>(null);
   const drawerTrigger = useRef<HTMLButtonElement | null>(null);
+  const compactAudio = useRef<HTMLAudioElement | null>(null);
+  const sharedGain = useRef(1);
+  const [compactPlaying, setCompactPlaying] = useState(false);
   const tabs = useRef<Array<HTMLButtonElement | null>>([]);
   const lock = useRef(false);
   const dirty = dirtyAgainst(editor, current);
@@ -58,6 +61,30 @@ export default function WorkspaceV0() {
   const left = a ? takes[a] : undefined;
   const right = b ? takes[b] : undefined;
   const comparison = left && right ? compareV0Takes(left.view, right.view) : null;
+  useEffect(() => {
+    compactAudio.current?.pause();
+    setCompactPlaying(false);
+  }, [takeId]);
+  function syncGain(element: HTMLAudioElement) {
+    sharedGain.current = element.volume;
+    document.querySelectorAll<HTMLAudioElement>('.chr-s4 audio').forEach(player => {
+      if (player !== element && player.volume !== sharedGain.current) player.volume = sharedGain.current;
+    });
+  }
+  function pauseOtherPlayers(element: HTMLAudioElement) {
+    document.querySelectorAll<HTMLAudioElement>('.chr-s4 audio').forEach(player => {
+      if (player !== element) player.pause();
+    });
+  }
+  async function toggleCompactPlayback() {
+    const player = compactAudio.current;
+    if (!player) return;
+    try {
+      if (!player.paused) { player.pause(); return; }
+      player.volume = sharedGain.current;
+      await player.play();
+    } catch (cause) { setError('音声を再生できません: ' + readableError(cause)); }
+  }
 
   async function refreshCharacters() {
     const list = await characterApi.list();
@@ -468,6 +495,13 @@ export default function WorkspaceV0() {
       <div className="chr-s4-dock-head">
         <strong>TAKE / TRANSPORT</strong><span title={takeId || ''}>{active ? short(active.view.takeId) : 'Take 未選択'}</span>
         <span className="chr-s4-state">{active?.read.integrity_state ?? '未取得'}</span>
+        <audio ref={compactAudio} src={active?.view.audioRef ?? undefined} preload="metadata"
+          onPlay={event => { pauseOtherPlayers(event.currentTarget); setCompactPlaying(true); }}
+          onPause={() => setCompactPlaying(false)} onEnded={() => setCompactPlaying(false)}
+          onVolumeChange={event => syncGain(event.currentTarget)} />
+        <button type="button" disabled={!active?.view.audioRef}
+          aria-label={compactPlaying ? '選択中 Take を停止' : '選択中 Take を再生'}
+          onClick={() => void toggleCompactPlayback()}>{compactPlaying ? '停止' : '再生'}</button>
         <button type="button" aria-expanded={expanded} aria-controls="chr-s4-dock-detail"
           onClick={() => setExpanded(e => !e)}>{expanded ? '縮小' : 'A/B・再生・ZIP を開く'}</button>
       </div>
@@ -486,17 +520,23 @@ export default function WorkspaceV0() {
             const t = slot === 'A' ? left : right;
             return <div key={slot} className="chr-s4-ab-slot">
               <strong>Take {slot}</strong><code title={t?.view.takeId}>{t ? short(t.view.takeId) : '未選択'}</code>
-              {t?.view.audioRef ? <audio controls preload="metadata" src={t.view.audioRef} aria-label={'Take ' + slot + ' の音声'}
-                onPlay={event => document.querySelectorAll<HTMLAudioElement>('.chr-s4 audio').forEach(el => {
-                  if (el !== event.currentTarget) el.pause();
-                })} /> : <span>音声なし / unavailable</span>}
+              {t?.view.audioRef ? <audio controls controlsList="nodownload noplaybackrate" preload="metadata" src={t.view.audioRef}
+                aria-label={'Take ' + slot + ' の音声'}
+                onLoadedMetadata={event => { event.currentTarget.volume = sharedGain.current; }}
+                onVolumeChange={event => syncGain(event.currentTarget)}
+                onRateChange={event => { if (event.currentTarget.playbackRate !== 1) event.currentTarget.playbackRate = 1; }}
+                onPlay={event => pauseOtherPlayers(event.currentTarget)} /> : <span>音声なし / unavailable</span>}
             </div>;
           })}
         </div>
         <p className="chr-s4-hint">A/B は異なる Take ID のみ。各 WAV は個別に peak-normalized、同じ再生 gain でも SPL・実際の声量は比較できません。</p>
         {comparison && !comparison.allowed && <p className="chr-s4-warning">A/B 不可：異なる再生可能な Take が必要です。</p>}
-        {active?.view.audioRef && !a && !b && <audio controls preload="metadata"
-          src={active.view.audioRef} aria-label="選択中 Take の試聴" />}
+        {active?.view.audioRef && !a && !b && <audio controls controlsList="nodownload noplaybackrate" preload="metadata"
+          src={active.view.audioRef} aria-label="選択中 Take の試聴"
+          onLoadedMetadata={event => { event.currentTarget.volume = sharedGain.current; }}
+          onVolumeChange={event => syncGain(event.currentTarget)}
+          onRateChange={event => { if (event.currentTarget.playbackRate !== 1) event.currentTarget.playbackRate = 1; }}
+          onPlay={event => pauseOtherPlayers(event.currentTarget)} />}
         {active && <p className="chr-s4-hint">Source 実ラン: {active.view.sourceProvenance} /
           再計算 evidence: {active.view.sourceEvidence} /
           来歴: {active.read.envelope.provenance_state}。
