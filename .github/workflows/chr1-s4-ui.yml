@@ -1,0 +1,40 @@
+name: chr1-s4-ui-browser
+
+on:
+  pull_request:
+    paths:
+      - "src/main.tsx"
+      - "src/WorkspaceV0.tsx"
+      - "src/workspace-v0.css"
+      - "src/workspace/**"
+      - "scripts/chr1-s4-browser-smoke.mjs"
+      - ".github/workflows/chr1-s4-ui.yml"
+  workflow_dispatch:
+
+jobs:
+  responsive-ui-evidence:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.16.0"
+      - name: Use established Studio dependency environment
+        run: npm install --global npm@11.6.0
+      - name: Install Studio + CI-only browser dependency
+        run: |
+          npm install --no-audit --no-fund
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Build and browser acceptance (mock HTTP; not physical certification)
+        run: |
+          npm run build
+          node scripts/chr1-s4-browser-smoke.mjs
+      - name: Archive desktop/tablet/mobile screenshots and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chr1-s4-ui-screenshots
+          path: artifacts/chr1-s4-ui/**
+          if-no-files-found: warn
