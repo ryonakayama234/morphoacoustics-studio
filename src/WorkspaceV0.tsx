@@ -234,6 +234,9 @@ export default function WorkspaceV0() {
       const candidate = readLegacyCandidate(raw, await fingerprint(raw));
       // Do not silently import, nor claim imported Takes or physical settings.
       setLegacy(candidate);
+      const prior = parseImportReceipts(window.localStorage.getItem(IMPORT_RECEIPT_KEY))
+        .find(r => r.legacyId === candidate.id);
+      if (prior) setImportReceipt(prior);
       setMessage('旧下書きのプレビューのみ。取り込み操作はまだ実行していません。');
     } catch (cause) { setError('旧下書きの確認不可: ' + readableError(cause)); }
   }
@@ -285,6 +288,41 @@ export default function WorkspaceV0() {
       setError('Import 停止・再 POST 禁止: ' + readableError(cause) +
         (pending ? ' pending receipt を保持しました。再試行せずサーバの metadata.notes と照合してください。' : ''));
     } finally { lock.current = false; setBusy(false); }
+  }
+  /** Resolve an uncertain POST by readback only. Never send a second POST. */
+  async function reconcilePendingImport() {
+    if (!legacy || lock.current) return;
+    lock.current = true; setBusy(true); setError(''); setMessage('');
+    try {
+      const receipts = parseImportReceipts(window.localStorage.getItem(IMPORT_RECEIPT_KEY));
+      const pending = receipts.filter(r => r.legacyId === legacy.id && r.status === 'pending');
+      if (pending.length !== 1) throw new Error('照合可能な pending receipt は一意ではありません。');
+      const intent = pending[0];
+      const records = await characterApi.list();
+      const matches = records.filter(v => {
+        const anchor = parseImportAnchor(v.snapshot.metadata.notes);
+        return anchor?.import_intent_id === intent.importIntentId &&
+          anchor.source_sha256 === intent.sourceSha256 &&
+          anchor.legacy_character_id === intent.legacyId;
+      });
+      if (matches.length !== 1) throw new Error('サーバ上の対応 anchor が ' + matches.length +
+        ' 件です。0 件は失敗の証明ではありません。追加 POST は行いません。');
+      const exact = await characterApi.revision(matches[0].snapshot.character_id, 1);
+      const anchor = parseImportAnchor(exact.snapshot.metadata.notes);
+      if (!exact.snapshot_sha256 || anchor?.import_intent_id !== intent.importIntentId ||
+          exact.snapshot.revision !== 1 || exact.snapshot.character_id !== matches[0].snapshot.character_id)
+        throw new Error('revision 1 の source / intent / SHA を確認できません。');
+      const confirmed: ImportReceipt = { ...intent, status: 'confirmed',
+        serverCharacterId: exact.snapshot.character_id, serverRevision: 1,
+        serverSnapshotSha256: exact.snapshot_sha256 };
+      safeStore(IMPORT_RECEIPT_KEY, JSON.stringify(receipts.map(r =>
+        r.importIntentId === intent.importIntentId ? confirmed : r)));
+      setImportReceipt(confirmed); setCharacters(records);
+      setCurrent(exact); setEditor(editorOf(exact)); setMode('Character');
+      setMessage('既存の revision 1 と対応表を readback で照合しました。再 POST していません。');
+    } catch (cause) {
+      setError('照合停止・新規 POST なし: ' + readableError(cause));
+    } finally { setBusy(false); lock.current = false; }
   }
   function openDrawer() {
     setDrawerOpen(true);
@@ -373,7 +411,11 @@ export default function WorkspaceV0() {
               <p>転送範囲: 名前・説明のみ。Source SHA-256: <code>{legacy.sourceSha256}</code></p>
               <button type="button" disabled={busy} onClick={() => void importLegacy()}>新規 Character として取り込む（統合しない）</button>
             </div>}
-            {importReceipt && <p>対応表: <code>{importReceipt.legacyId}</code> → <code>{importReceipt.serverCharacterId}</code>
+            {importReceipt?.status === 'pending' && <div className="chr-s4-import-review">
+              <p>前回の import 結果が未確定です。重複送信は禁止。既存 revision 1 の readback のみ実施します。</p>
+              <button type="button" disabled={busy} onClick={() => void reconcilePendingImport()}>pending receipt を照合</button>
+            </div>}
+            {importReceipt?.status === 'confirmed' && <p>対応表: <code>{importReceipt.legacyId}</code> → <code>{importReceipt.serverCharacterId}</code>
               （rev {importReceipt.serverRevision}、SHA <code>{importReceipt.serverSnapshotSha256}</code>）</p>}
             <p className="chr-s4-hint">UX レベルの重複防止のみ。原子的 exactly-once は保証しません。失敗や曖昧な場合は fail-closed。</p>
           </details>
