@@ -49,7 +49,7 @@
 .chr-s4-hint { color: var(--s4-mute); font-size: 12px; line-height: 1.5; }
 .chr-s4-library-list { display: grid; gap: 6px; margin: 12px 0; }
 .chr-s4-library-list button { display: flex; flex-direction: column; text-align: left; align-items: flex-start; gap: 4px; width: 100%; background: #eff0ee; }
-.chr-s4-library-list button[aria-current="true"] { background: #252a27; color: white; }
+.chr-s4 .chr-s4-library-list button[aria-current="true"] { background: #252a27; color: #fff; border-color: #252a27; }
 .chr-s4-library-list small { color: inherit; opacity: .7; font-size: 11px; }
 .chr-s4-separator { height: 1px; background: var(--s4-line); margin: 20px 0; }
 .chr-s4-ref { display: block; margin: 5px 0; width: 100%; text-align: left; overflow-wrap: anywhere; }
