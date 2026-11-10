@@ -55,7 +55,7 @@ try {
   const page = await browser.newPage();
   const errors=[];
   page.on('pageerror', (e) => errors.push(e.message));
-  await page.goto('http://127.0.0.1:5173/');
+  await page.goto('http://127.0.0.1:5173/?view=legacy');
   await page.getByRole('button', { name: 'CC-A2 · 2身体の比較実験を開く／閉じる' }).click();
   const section = page.locator('section[aria-labelledby="cc-a2-heading"]');
   await section.waitFor();
