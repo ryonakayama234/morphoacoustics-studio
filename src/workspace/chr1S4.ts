@@ -101,8 +101,7 @@ export function checkImportCollision(records: readonly CharacterVersion[], candi
     const anchor = parseImportAnchor(notes);
     if (!anchor) throw new Error('不正な既存 import anchor を検出しました。重複確認不能のため停止します。');
     if (anchor.source_key === candidate.sourceKey &&
-        anchor.legacy_character_id === candidate.id &&
-        anchor.source_sha256 === candidate.sourceSha256)
+        anchor.legacy_character_id === candidate.id)
       matches.push(item.snapshot.character_id);
   }
   return matches;
