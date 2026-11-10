@@ -45,6 +45,7 @@ describe('S4 bounded references and fail-closed UX', () => {
     });
     expect(parseImportAnchor(IMPORT_PREFIX + '{')).toBeNull();
     expect(checkImportCollision([version(notes)], candidate)).toEqual(['server-1']);
+    expect(checkImportCollision([version(notes)], { ...candidate, sourceSha256: 'b'.repeat(64) })).toEqual(['server-1']);
     expect(checkImportCollision([version(notes), version(notes, 'server-2')], candidate)).toHaveLength(2);
     expect(() => checkImportCollision([version(IMPORT_PREFIX + '{')], candidate)).toThrow(/不正/);
   });
