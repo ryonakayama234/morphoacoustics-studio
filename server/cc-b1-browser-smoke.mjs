@@ -40,7 +40,7 @@ try{
   browser=await chromium.launch({headless:true,args:['--no-sandbox','--autoplay-policy=no-user-gesture-required']});
   const page=await browser.newPage();
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
-  await page.goto('http://127.0.0.1:5173/');
+  await page.goto('http://127.0.0.1:5173/?view=legacy');
   const toggle=page.getByRole('button',{name:'CC-B1 · 身体の断面積を変えて声を聴く（ローカル実験）'});
   await toggle.click();
   const section=page.locator('section[aria-labelledby="cc-b1-heading"]');

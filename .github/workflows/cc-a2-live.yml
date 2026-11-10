@@ -191,5 +191,7 @@ jobs:
             cc-a2-server.log
             cc-a2-restart.log
             ${{ runner.temp }}/cc-a2-browser-evidence/cc-a2-browser.png
+            ${{ runner.temp }}/cc-a2-browser-evidence/chr1-s4-*.png
+            ${{ runner.temp }}/cc-a2-browser-evidence/chr1-s4-physical-export.bag.zip
             ${{ runner.temp }}/cc-a2-browser-evidence/*.log
           if-no-files-found: warn

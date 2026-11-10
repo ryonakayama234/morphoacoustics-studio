@@ -82,7 +82,7 @@ try {
   const page = await context.newPage();
   const consoleErrors = [];
   page.on('pageerror', (error) => consoleErrors.push(error.message));
-  await page.goto('http://127.0.0.1:5173/', { waitUntil: 'domcontentloaded' });
+  await page.goto('http://127.0.0.1:5173/?view=legacy', { waitUntil: 'domcontentloaded' });
   await page.getByLabel('Backend / integration fixture').selectOption('live-x2a');
   await page.getByRole('button', { name: /X2a対応.*seed=0/ }).click();
   await page.getByRole('button', { name: 'Perform', exact: true }).click();
