@@ -130,7 +130,7 @@
 3. **Replay と独立 oracle は別:** 再実行は同 source/code/seed を同一実行範囲で繰り返す**再現性**検査。独立 oracle は親幾何・5cell law・同一負荷の複素応答・出力波形を別経路で求める**正しさ**検査。原判定を流用した自己照合は独立 oracle と呼ばない。OD-2 既存閾値：`max log-area residual ≤1e-12`、体積相対 residual ≤1e-12、timed log-area ≤1e-10、同条件 complex relative error ≤1e-9、same-runtime replay L2 ≤1e-12。**既存 OD-2 限定 run への根拠**であり別実験へ自動移植しない。
 4. **知覚評価は別試験:** 物理解析・対照と cutoff をロックした後、刺激の音量正規化規則／例外／順序 randomization、ABX/2AFC 課題、聴取者の属性・除外規則・サンプル数と検定法を**別事前登録**。実施者・分析者に条件の暗号化 label を使い、回答後に開封する。**「聞き分け可」は物理因果や音質 GO ではなく知覚結果**。有意差を見てモデルを調整したら新実験として扱う。
 
-**事前登録に必要な欄 [H]:** `prereg_id/status/revision`、対立仮説と棄却可能な予測、許可済み case/positive/null/mutation の正確な IDs、factor と**唯一の intervention 対象**、他4要因の固定値・hash、実験系譜（Studio/C0re research）、pin/runtime/source 資格、sample 数・解析時窓、primary/secondary observables と method SHA、同一参照面・units・盲検・多重比較、**先に固定する threshold**・未検証欄、STOP/UNKNOWN 規則、独立 oracle、データ保全・検証者・実施 GO の署名。未実行の実験は `REGISTERED_NOT_RUN` とし、値だけから PASSED を作らない。
+**事前登録に必要な欄 [H]:** `prereg_id/status/revision`、対立仮説と棄却可能な予測、許可済み case/positive/null/mutation の正確な IDs、factor と**唯一の intervention 対象**、他4要因の固定値・hash、実験系譜（Studio/Core research）、pin/runtime/source 資格、sample 数・解析時窓、primary/secondary observables と method SHA、同一参照面・units・盲検・多重比較、**先に固定する threshold**・未検証欄、STOP/UNKNOWN 規則、独立 oracle、データ保全・検証者・実施 GO の署名。未実行の実験は `REGISTERED_NOT_RUN` とし、値だけから PASSED を作らない。
 
 **実験実施に進める設計関門（G0 内では GO を発行しない） [H]:** (i) 介入が適用可能な既存 backend と pin に閉じる、(ii) 他要因が hash／参照面で固定できる、(iii) null と少なくとも一つの偽造 mutation が事前に定義される、(iv) method と oracle を実行結果を見る前に凍結できる、(v) 実験不可の factor は `BLOCKED_BY_CAPABILITY` と分けて登録、(vi) Muse 審査後に Owner が**当該実験**の個別 GO を出す。測定の設計完成を5要因すべての実測完了と同一視しない。
 
@@ -217,7 +217,7 @@
 ## 根拠（参照した採用済み資料／現行コード）
 
 - [F] [BODYMAP-R（main）](body-module-map-response-20261111.md) QM1–QM5、[G0 質問票](body-map-g0-questions-20261111.md)。
-- [F] [Studio #48 / S3 Owner 処分](https://github.com/ryonakayama234/morphoacoustics-studio/issues/48)、[Studio main `server/v0-facade.mjs`](https://github.com/ryonakayama234/morphoacoustics-studio/blob/main/server/v0-facade.mjs)、[`V0TakeAdapter.ts`](https://github.com/ryonakayama234/morphoacoustics-studio/blob/main/src/performance/V0TakeAdapter.ts)（source再計算とR1 strict-B、snapshot、preview gain の区別）。
+- [F] [Studio #48 / S3 Owner 処分](https://github.com/ryonakayama234/morphoacoustics-studio/issues/48)、[Studio main `server/v0-facade.mjs`](https://github.com/ryonakayama234/morphoacoustics-studio/blob/main/server/v0-facade.mjs)、[`V0TakeAdapter.ts`](https://github.com/ryonakayama234/morphoacoustics-studio/blob/main/src/performance/V0TakeAdapter.ts)（source再計算とRQ1 strict-B、snapshot、preview gain の区別）。
 - [F] [Studio #50 / S5 Owner PC 実測記録](https://github.com/ryonakayama234/morphoacoustics-studio/issues/50#issuecomment-6736075443)、[S2 archive runbook](chr1-s2-take-archive-runbook.md)（BagIt と既存 provenance の区分）。
 - [F] [Core OD-2 RESULTS（正式 B1 pin 時点）](https://github.com/ryonakayama234/morphoacoustics/blob/b5dc95ddbf00efe423635e8ff73f2b550239cd2b/docs/research/od2-reusable-physical-body-20261102/RESULTS.md)、[P1 closed catalog protocol](https://github.com/ryonakayama234/morphoacoustics/blob/b5dc95ddbf00efe423635e8ff73f2b550239cd2b/docs/product/body-b1/P1_CORE_CATALOG_PROTOCOL.md)、[B1 Issue #54 決定履歴](https://github.com/ryonakayama234/morphoacoustics-studio/issues/54)。
 - [F] [B1 計画 QP1–QP6（main）](body-b1-plan-response-20261110.md)。過去の提案書内の `pending` 文言より、後日の Issue #54 Owner 決定を優先する。**本回答で新たに物理実行・統計推定・聴取をした事実はない**。
