@@ -1,0 +1,426 @@
+{
+  "document_id": "BODYMAP-G0-B-METHOD-MANIFEST-PROPOSAL-20261111-01",
+  "proposal_status": "PROPOSAL_UNFROZEN_NOT_RUNTIME_SCHEMA",
+  "schema_id": "bodymap-feature-method-manifest-proposal/0",
+  "pack_schema_version": "take-metrology-pack/0",
+  "feature_set_id": "bodymap-take-features/0",
+  "reference_contract": "docs/product/bodymap-g0-A-measurement-contract-20261111.md",
+  "source_response": "docs/product/body-map-g0-response-20261111.md",
+  "method_versioning": {
+    "id_policy": "Any algorithm, threshold, window, sign, reference-plane, or invalidation change requires a new feature_algorithm_id. Store both old and new results.",
+    "config_digest_policy": "SHA256 of canonicalized immutable JSON configuration to be selected and published at freeze; no digest claimed yet.",
+    "input_policy": "Bind original raw artifact SHA-256 + exact hash scope, samplerate and observer plane; no WAV inference.",
+    "comparable_when": "SAME_METHOD and same pin/load/observer/reference plane, or both sides recomputed from independently verified raw with same newer method",
+    "current_execution_status": "NO_METHOD_HAS_BEEN_EXECUTED_OR_VALIDATED_IN_THIS_PROPOSAL"
+  },
+  "analysis_profile": {
+    "profile_id": "fixed_raw_48k_0p5s_candidate/0",
+    "expected_nominal_sample_rate_hz": 48000,
+    "nominal_total_samples": 24000,
+    "window_samples": 3840,
+    "hop_samples": 960,
+    "window_ms": 80,
+    "hop_ms": 20,
+    "frame_rule": "Only complete frames starting at 0,960,1920,... with start+3840<=N; no edge padding; time is original zero-based sample index/fs. For N=24000, 22 complete frames.",
+    "nonfinite_rule": "Reject numeric feature if any selected input sample is nonfinite, record INVALID_NUMERIC rather than zero.",
+    "raw_domain": "native model pressure Pa at nominal 0.20m proxy; no gain normalization, dBFS or absolute SPL",
+    "profile_status": "DEFINED_NOT_VALIDATED"
+  },
+  "methods": [
+    {
+      "status": "DEFINED_NOT_VALIDATED",
+      "validation_gate": "NO_PASS_UNTIL_SYNTHETIC_TESTS_AND_INDEPENDENT_REVIEW",
+      "implementation_git_sha": null,
+      "dependency_lock_sha256": null,
+      "config_canonical_sha256": null,
+      "feature_algorithm_id": "bodymap.level.raw-pa/0",
+      "name": "level",
+      "unit": {
+        "rms": "Pa",
+        "mean": "Pa",
+        "peak": "Pa",
+        "proxy_level": "dB re 1 Pa (model proxy)"
+      },
+      "input": "qualified unnormalized native raw pressure x[n] in Pa; full record and optional fixed full frames",
+      "formula": "rms=sqrt(sum(x[n]^2)/N) (no mean removal); mean=sum(x[n])/N; peak=max(abs(x[n])); proxy_db=20*log10(rms/1Pa) only if rms>0",
+      "window": {
+        "full_record": true,
+        "frame_samples": 3840,
+        "hop_samples": 960,
+        "no_partial": true,
+        "frame_weight": "rectangular; Hann not applied to amplitude RMS"
+      },
+      "bounds": {
+        "rms_min_inclusive": 0,
+        "proxy_reference_pa": 1,
+        "level_log_zero": "null"
+      },
+      "invalid_rules": [
+        {
+          "if": "artifact_missing_or_SHA_unverified",
+          "reason": "RAW_BYTES_UNVERIFIED",
+          "value": null
+        },
+        {
+          "if": "N==0",
+          "reason": "EMPTY_SIGNAL",
+          "value": null
+        },
+        {
+          "if": "any_nonfinite",
+          "reason": "INVALID_NUMERIC",
+          "value": null
+        },
+        {
+          "if": "rms==0",
+          "reason": "ZERO_RMS",
+          "field": "proxy_db",
+          "value": null
+        }
+      ],
+      "test_plan": [
+        {
+          "fixture": "constant 2 Pa 3840 frames",
+          "expected": "rms=2 Pa, mean=2 Pa, peak=2 Pa, proxy_db=6.020599913 dB"
+        },
+        {
+          "fixture": "all zeros",
+          "expected": "rms=0, db=null ZERO_RMS"
+        },
+        {
+          "fixture": "preview-only",
+          "expected": "no raw Pa level"
+        }
+      ]
+    },
+    {
+      "status": "DEFINED_NOT_VALIDATED",
+      "validation_gate": "NO_PASS_UNTIL_SYNTHETIC_TESTS_AND_INDEPENDENT_REVIEW",
+      "implementation_git_sha": null,
+      "dependency_lock_sha256": null,
+      "config_canonical_sha256": null,
+      "feature_algorithm_id": "bodymap.f0.acf-windowed/0",
+      "name": "f0_observed",
+      "unit": "Hz",
+      "input": "qualified raw pressure, no preview; 48k profile 80ms windows",
+      "formula": "For each Hann-windowed mean-subtracted frame, normalized ACF rho[k]=sum_n x[n]x[n+k]/sqrt(sum_n x[n]^2 * sum_n x[n+k]^2) on valid overlap; find maximum positive rho over lags ceil(fs/400) through floor(fs/70); f0=fs/k using discrete integer lag (no peak interpolation in v0 candidate); summary median of accepted frames.",
+      "config": {
+        "f_min_hz": 70,
+        "f_max_hz": 400,
+        "frame_samples": 3840,
+        "hop_samples": 960,
+        "hann_periodic": false,
+        "remove_mean_before_hann": true,
+        "periodicity_min_inclusive": 0.7,
+        "octave_competitor_margin": 0.05,
+        "minimum_valid_frames": 3,
+        "median_relative_deviation_max": 0.1,
+        "lag_tie_break": "smallest lag; if octave-related competitor within 0.05 normalized ACF, invalidate",
+        "aggregator": "median accepted per-frame frequencies"
+      },
+      "invalid_rules": [
+        {
+          "if": "zero_energy_or_nonfinite",
+          "reason": "INVALID_NUMERIC_OR_ZERO_RMS",
+          "value": null
+        },
+        {
+          "if": "rho_peak < 0.7",
+          "reason": "LOW_PERIODICITY",
+          "value": null
+        },
+        {
+          "if": "octave-related alternative within score margin",
+          "reason": "OCTAVE_AMBIGUITY",
+          "value": null
+        },
+        {
+          "if": "<3 accepted or excess deviation",
+          "reason": "UNRESOLVED_PERIOD",
+          "value": null
+        }
+      ],
+      "claim_limit": "observed output periodicity candidate, not prescribed LF F0, vocal-fold action or biological source proof",
+      "test_plan": [
+        {
+          "fixture": "stationary 100Hz sine at 48k",
+          "expected": "candidate near 100Hz within discretization; exact tolerance to preregister"
+        },
+        {
+          "fixture": "100Hz and octave competitor mixture",
+          "expected": "may invalidate on ambiguity"
+        },
+        {
+          "fixture": "aperiodic noise",
+          "expected": "invalid or quantified false-positive rate; not validated"
+        }
+      ]
+    },
+    {
+      "status": "DEFINED_NOT_VALIDATED",
+      "validation_gate": "NO_PASS_UNTIL_SYNTHETIC_TESTS_AND_INDEPENDENT_REVIEW",
+      "implementation_git_sha": null,
+      "dependency_lock_sha256": null,
+      "config_canonical_sha256": null,
+      "feature_algorithm_id": "bodymap.harmonic-tilt.output/0",
+      "name": "harmonic_tilt",
+      "unit": "dB/oct",
+      "input": "80ms Hann frames with f0_observed accepted; raw output only",
+      "formula": "Compute one-sided 8192-point zero-padded magnitude DFT of demeaned Hann frame. For k=2..10 find maximum magnitude in +/-1 FFT bin from round(k*f0*8192/fs). Fit ordinary least-squares y=20log10(magnitude), x=log2((k*f0)/1Hz), slope in dB/oct; median per-frame slope.",
+      "config": {
+        "fft_size": 8192,
+        "window": "symmetric Hann",
+        "harmonic_start": 2,
+        "harmonic_end": 10,
+        "search_bins": 1,
+        "minimum_usable_harmonics": 5,
+        "minimum_peak_relative_db": -60,
+        "minimum_valid_frames": 3,
+        "fit": "unweighted linear least squares log2 frequency vs amplitude dB",
+        "frame_samples": 3840,
+        "hop_samples": 960
+      },
+      "invalid_rules": [
+        {
+          "if": "no qualified f0 or too few harmonic peaks",
+          "reason": "HARMONIC_UNRESOLVED",
+          "value": null
+        },
+        {
+          "if": "peak outside Nyquist or lower than relative floor",
+          "reason": "INSUFFICIENT_HARMONICS",
+          "value": null
+        },
+        {
+          "if": "unstable nonfinite fitting",
+          "reason": "INVALID_NUMERIC",
+          "value": null
+        }
+      ],
+      "claim_limit": "OUTPUT harmonic tilt including filter/load; not glottal source spectral tilt",
+      "test_plan": [
+        {
+          "fixture": "synthetic sum of harmonics with known imposed log-frequency amplitude slope",
+          "expected": "estimated slope within preregistered tolerance"
+        },
+        {
+          "fixture": "broadband noise",
+          "expected": "no qualified harmonic slope"
+        }
+      ]
+    },
+    {
+      "status": "DEFINED_NOT_VALIDATED",
+      "validation_gate": "NO_PASS_UNTIL_SYNTHETIC_TESTS_AND_INDEPENDENT_REVIEW",
+      "implementation_git_sha": null,
+      "dependency_lock_sha256": null,
+      "config_canonical_sha256": null,
+      "feature_algorithm_id": "bodymap.transfer-loaded-peaks/0",
+      "name": "resonance_peak_candidates",
+      "unit": "Hz",
+      "input": "qualified complex transfer H(f) with same load, port/observer and phasor convention; not arbitrary output FFT",
+      "formula": "Compute |H(f)| on native registered monotonically increasing frequency grid. Candidate i is a strict local maximum (value larger than both neighbors) with >=3dB prominence versus nearest local minima on both sides; sort ascending frequency. No interpolation in v0.",
+      "config": {
+        "min_prominence_db": 3,
+        "strict_local_max": true,
+        "interpolate": false,
+        "endpoint_policy": "exclude endpoints",
+        "minimum_grid_points": 3,
+        "phasor_sign": "must be supplied by artifact, not assumed"
+      },
+      "invalid_rules": [
+        {
+          "if": "complex transfer missing",
+          "reason": "NO_QUALIFIED_COMPLEX_TRANSFER",
+          "value": null
+        },
+        {
+          "if": "different port/load/plane, nonmonotone f or missing phasor sign",
+          "reason": "PLANE_OR_LOAD_MISMATCH",
+          "value": null
+        },
+        {
+          "if": "nonfinite grid or values",
+          "reason": "INVALID_NUMERIC",
+          "value": null
+        }
+      ],
+      "claim_limit": "model transfer peak candidates only; not anatomical formants or measured speech formants",
+      "test_plan": [
+        {
+          "fixture": "synthetic complex transfer with one known resonance",
+          "expected": "one candidate in registered grid, threshold check"
+        },
+        {
+          "fixture": "mismatched load",
+          "expected": "invalid rather than pooled peaks"
+        }
+      ]
+    },
+    {
+      "status": "DEFINED_NOT_VALIDATED",
+      "validation_gate": "NO_PASS_UNTIL_SYNTHETIC_TESTS_AND_INDEPENDENT_REVIEW",
+      "implementation_git_sha": null,
+      "dependency_lock_sha256": null,
+      "config_canonical_sha256": null,
+      "feature_algorithm_id": "bodymap.output-spectral-peaks/0",
+      "name": "output_spectral_peaks",
+      "unit": "Hz",
+      "input": "qualified raw Pa and registered fixed 80ms Hann FFT output windows",
+      "formula": "8192-point DFT, magnitude log spectrum of mean-subtracted Hann frame; find strict interior local maxima with >=3dB prominence over flanking nearest minima; report per-frame frequency grid peaks sorted ascending (no physical formant label).",
+      "config": {
+        "fft_size": 8192,
+        "frame_samples": 3840,
+        "hop_samples": 960,
+        "min_prominence_db": 3,
+        "endpoint_policy": "exclude",
+        "interpolate": false,
+        "aggregation": "per-frame array; no cross-frame formant tracking"
+      },
+      "invalid_rules": [
+        {
+          "if": "raw missing/nonfinite/empty",
+          "reason": "RAW_BYTES_UNVERIFIED_OR_INVALID_NUMERIC",
+          "value": null
+        },
+        {
+          "if": "no peaks satisfying rule",
+          "reason": "NO_PEAK_CANDIDATES",
+          "value": []
+        }
+      ],
+      "claim_limit": "observed spectral peaks; not transfer-function resonances",
+      "test_plan": [
+        {
+          "fixture": "two synthesized discrete tones",
+          "expected": "report peaks near fixed FFT bins"
+        },
+        {
+          "fixture": "nonfinite raw",
+          "expected": "invalid"
+        }
+      ]
+    },
+    {
+      "status": "DEFINED_NOT_VALIDATED",
+      "validation_gate": "NO_PASS_UNTIL_SYNTHETIC_TESTS_AND_INDEPENDENT_REVIEW",
+      "implementation_git_sha": null,
+      "dependency_lock_sha256": null,
+      "config_canonical_sha256": null,
+      "feature_algorithm_id": "bodymap.noise-proxy.harmonic-mask/0",
+      "name": "noise_proxy",
+      "unit": {
+        "ratio": "dimensionless",
+        "db": "dB residual-to-total power"
+      },
+      "input": "qualified raw Pa, accepted f0 windows, fixed 80ms Hann FFT",
+      "formula": "In 70..4000Hz one-sided magnitude-squared spectrum, mask all bins within +/-1 bin around each integer harmonic of accepted f0. Residual energy=sum unmasked powers, total=sum all band powers. ratio=residual/total; residual_db=10log10(ratio) if ratio>0; ratio=0 yields db=null ZERO_RESIDUAL.",
+      "config": {
+        "fft_size": 8192,
+        "frame_samples": 3840,
+        "hop_samples": 960,
+        "min_hz": 70,
+        "max_hz": 4000,
+        "mask_half_width_bins": 1,
+        "minimum_valid_frames": 3,
+        "harmonic_rule": "nearest bin for each k*f0 <=4000Hz"
+      },
+      "invalid_rules": [
+        {
+          "if": "unqualified f0, no raw, nonfinite",
+          "reason": "PERIODICITY_OR_INPUT_UNQUALIFIED",
+          "value": null
+        },
+        {
+          "if": "total<=0",
+          "reason": "ZERO_RMS",
+          "value": null
+        },
+        {
+          "if": "ratio==0",
+          "reason": "ZERO_RESIDUAL",
+          "field": "db",
+          "value": null
+        }
+      ],
+      "claim_limit": "model numerical residual only; not actual breathiness, airflow turbulence or biological noise",
+      "test_plan": [
+        {
+          "fixture": "pure periodic tone",
+          "expected": "possible leakage residual; do not assert zero"
+        },
+        {
+          "fixture": "harmonic plus known injected off-mask tones",
+          "expected": "monotonic increase, preregister quantitative bounds"
+        }
+      ]
+    },
+    {
+      "status": "DEFINED_NOT_VALIDATED",
+      "validation_gate": "NO_PASS_UNTIL_SYNTHETIC_TESTS_AND_INDEPENDENT_REVIEW",
+      "implementation_git_sha": null,
+      "dependency_lock_sha256": null,
+      "config_canonical_sha256": null,
+      "feature_algorithm_id": "bodymap.time-features.rms-onset/0",
+      "name": "time_features",
+      "unit": {
+        "onset_sample": "integer sample index",
+        "onset_seconds": "s",
+        "frame_rms": "Pa"
+      },
+      "input": "raw pressure full fixed windows",
+      "formula": "For each complete frame compute non-demeaned RMS. Candidate onset is the start sample of first of >=2 consecutive frames whose RMS >= max(frame_RMS)*10^(-30/20). If max RMS=0, onset is null. Store original frame start indices; no end padding.",
+      "config": {
+        "frame_samples": 3840,
+        "hop_samples": 960,
+        "relative_onset_db": -30,
+        "required_consecutive_frames": 2,
+        "frame_time_position": "start",
+        "no_partial": true
+      },
+      "invalid_rules": [
+        {
+          "if": "empty/nonfinite/missing raw",
+          "reason": "INVALID_NUMERIC_OR_RAW_UNAVAILABLE",
+          "value": null
+        },
+        {
+          "if": "all-zero or no two qualifying frames",
+          "reason": "NO_ENERGY_ONSET",
+          "value": null
+        }
+      ],
+      "claim_limit": "model energy onset only, NOT gesture, contact or physiological onset",
+      "test_plan": [
+        {
+          "fixture": "synthetic finite step envelope",
+          "expected": "first qualifying frame start within preregistered frame tolerance"
+        },
+        {
+          "fixture": "silent signal",
+          "expected": "null onset"
+        }
+      ]
+    }
+  ],
+  "failure_policy": {
+    "reason_code_required_on_null": true,
+    "zero_not_unknown": true,
+    "do_not_impute": true,
+    "unmodeled_not_zero": true,
+    "refusal_audio": "NOT_APPLICABLE with REFUSAL_NO_AUDIO",
+    "historic_source": "S3/S5 actual_run_samples_sha256 null, full_verified_source_state UNKNOWN",
+    "backfill_prohibited": true
+  },
+  "freeze_pending": {
+    "muse_review": null,
+    "owner_adoption": null,
+    "owner_commit_sha": null,
+    "owner_content_sha256": null,
+    "method_config_sha256": null
+  },
+  "source_anchors": [
+    "https://github.com/ryonakayama234/morphoacoustics-studio/blob/main/docs/product/body-map-g0-response-20261111.md",
+    "https://github.com/ryonakayama234/morphoacoustics-studio/pull/59#issuecomment-6795436085"
+  ]
+}
