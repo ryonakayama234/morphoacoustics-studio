@@ -1,7 +1,7 @@
 # REVERSE-R-20261114-01 — 音→身体：段0・段1の設計回答
 
-**日付:** 2026-11-14 JST ／ **回答:** Research Lead（ChatGPT）／ **審査:** Muse ／ **決定:** Owner  
-**質問票:** [REVERSE-20261114-01](reverse-route-questions-20261114.md)、[Draft PR #64](https://github.com/ryonakayama234/morphoacoustics-studio/pull/64)、[Issue #63](https://github.com/ryonakayama234/morphoacoustics-studio/issues/63)。  
+**日付:** 2026-11-14 JST ／ **回答:** Research Lead（ChatGPT）／ **審査:** Muse ／ **決定:** Owner
+**質問票:** [REVERSE-20261114-01](reverse-route-questions-20261114.md)、[Draft PR #64](https://github.com/ryonakayama234/morphoacoustics-studio/pull/64)、[Issue #63](https://github.com/ryonakayama234/morphoacoustics-studio/issues/63)。
 **状態:** DESIGN_PROPOSAL / MUSE_REVIEW_PENDING / OWNER_ADOPTION_PENDING。本書1件のみの追加。設計処方であり、事前登録の発効、実装、実験、ツール製作、素材ダウンロード、製品ピン変更、マージの GO ではない。
 
 ## 0. 質問票への回答の要約
@@ -100,7 +100,7 @@ T-HとT-Wを同じlossに混ぜない。Fidelity0のideal pressure-release `Zin`
 
 **複素距離:** `e_k=|HU_b(f_k)-HU_target(f_k)|/max(1,|HU_target(f_k)|)`。`D_H=sqrt(mean(e_k²))` を順位付けに用い、受容は **D_H≤1e-4 かつ max(e_k)≤1e-3** とする。normを使う理由はwrapped phaseやpeak抽出を避け、零点でも除算を安定させるため。各周波数の残差全量も保存し、平均だけで大誤差を隠さない。
 
-**出力距離:** 48kHzの1920-sample periodic Hann（40ms）、hop480（10ms）、NFFT1920、demeanなし、pre-emphasisなし、paddingなし。  
+**出力距離:** 48kHzの1920-sample periodic Hann（40ms）、hop480（10ms）、NFFT1920、demeanなし、pre-emphasisなし、paddingなし。
 `S[m,k]=|Σ_(n=0..1919) x[n+480m] w[n] exp(-j2πkn/1920)| / Σw`。片側振幅を使うが2倍化しない。100–3500Hzの25Hz binsを等重みで比較する。fitは**窓全体が[0,.20s)に入る17窓**、hold-outは**窓全体が[.35,.50s)に入る12窓**。窓中心だけで分割しない。時間hold-outは同じ「あい」の未使用時区間であり、新しい発話でも独立標本でもない。
 
 `s_ref=max S_target`（当該fit区間）、`ε=1e-6 s_ref`を両側に共通使用し、`r[m,k]=20log10((g S_b+ε)/(S_target+ε))`。raw primaryは **g=1**、**RMS(r)≤0.25dB かつ max|r|≤1dB** を受容案とする。raw出力の全sample相対L2は補助量として保存するが、発声位相を知った原波形一致だけでT-W成功にしない。hold-outでもfitで定めたs_ref/ε/gをそのまま使用し、再fitしない。s_ref=0、非有限、適格窓なしはUNKNOWN。
